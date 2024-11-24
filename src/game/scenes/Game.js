@@ -1,30 +1,23 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
 
-export class Game extends Scene
-{
-    constructor ()
-    {
+export class Game extends Scene {
+    constructor() {
         super('Game');
     }
 
-    create ()
-    {
-        this.cameras.main.setBackgroundColor(0x00ff00);
+    create() {
+        this.cameras.main.setBackgroundColor('#000000');
 
-        this.add.image(512, 384, 'background').setAlpha(0.5);
-
-        this.add.text(512, 384, 'Make something fun!\nand share it with us:\nsupport@phaser.io', {
+        this.add.text(512, 384, 'Teste Game Scene', {
             fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
             stroke: '#000000', strokeThickness: 8,
             align: 'center'
         }).setOrigin(0.5).setDepth(100);
 
-        EventBus.emit('current-scene-ready', this);
-    }
+        // Fade in the scene
+        this.cameras.main.fadeIn(1000);
 
-    changeScene ()
-    {
-        this.scene.start('GameOver');
+        EventBus.emit('current-scene-ready', this);
     }
 }

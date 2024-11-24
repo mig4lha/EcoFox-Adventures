@@ -9,9 +9,6 @@ export class Preloader extends Scene
 
     init ()
     {
-        //  We loaded this image in our Boot Scene, so we can display it here
-        this.add.image(512, 384, 'background');
-
         //  A simple progress bar. This is the outline of the bar.
         this.add.rectangle(512, 384, 468, 32).setStrokeStyle(1, 0xffffff);
 
@@ -32,8 +29,36 @@ export class Preloader extends Scene
         //  Load the assets for the game - Replace with your own assets
         this.load.setPath('assets');
 
-        this.load.image('logo', 'logo.png');
-        this.load.image('star', 'star.png');
+        // Backgrounds
+        this.load.image('main_menu_background', 'backgrounds/main_menu_background.png');
+
+        // Logos
+        this.load.image('logo', 'logos/logo.png');
+
+        // Buttons
+        this.load.spritesheet('playButton', 'buttons/playButton.png', { frameWidth: 144, frameHeight: 72 });
+        this.load.spritesheet('leaderboardButton', 'buttons/leaderboardButton.png', { frameWidth: 144, frameHeight: 72 });
+
+
+
+        // Debug logs to confirm assets are loaded
+        this.load.on('filecomplete-image-main_menu_background', () => {
+            console.log('main_menu_background loaded');
+        });
+        this.load.on('filecomplete-image-logo', () => {
+            console.log('logo loaded');
+        });
+        this.load.on('filecomplete-spritesheet-playButton', () => {
+            console.log('playButton spritesheet loaded');
+        });
+        this.load.on('filecomplete-spritesheet-leaderboardButton', () => {
+            console.log('leaderboardButton spritesheet loaded');
+        });
+
+        // Log any errors during the loading process
+        this.load.on('loaderror', (file) => {
+            console.error(`Failed to load file: ${file.key}`);
+        });
     }
 
     create ()

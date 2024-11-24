@@ -1,72 +1,117 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
+import { createButtonAnimation } from '../AnimationUtils';
 
-export class MainMenu extends Scene
-{
-    logoTween;
-
-    constructor ()
-    {
+export class MainMenu extends Scene {
+    constructor() {
         super('MainMenu');
+
+        console.log('MainMenu constructor');
+
+        this.bg = null; // Store reference to background
+        this.logo = null; // Store reference to logo
+        this.playButton = null; // Store reference to play button
+        this.leaderboardButton = null; // Store reference to leaderboard button
+
+        this.width = 0; // Screen width
+        this.height = 0; // Screen height
     }
 
-    create ()
-    {
-        this.add.image(512, 384, 'background');
+    create() {
+        console.log('MainMenu create');
 
-        this.logo = this.add.image(512, 300, 'logo').setDepth(100);
-
-        this.add.text(512, 460, 'Main Menu', {
-            fontFamily: 'Arial Black', fontSize: 38, color: '#ffffff',
-            stroke: '#000000', strokeThickness: 8,
-            align: 'center'
-        }).setDepth(100).setOrigin(0.5);
+        this.width = this.scale.width;
+        this.height = this.scale.height;
+        console.log(`Screen dimensions Main Menu: ${this.width}x${this.height}`);
         
+        // Initial setup
+        this.setupBackground();
+        this.setupLogo();
+        this.setupButtons();
+
+        // Fade in the scene
+        this.cameras.main.fadeIn(1000);
+
         EventBus.emit('current-scene-ready', this);
     }
 
-    changeScene ()
-    {
-        if (this.logoTween)
-        {
-            this.logoTween.stop();
-            this.logoTween = null;
+    setupBackground() {
+        // Add or update background
+        if (!this.bg) {
+            this.bg = this.add.image(this.width / 2, this.height / 2, 'main_menu_background');
         }
 
-        this.scene.start('Game');
+        // Scale background to cover screen
+        const scaleX = this.width / this.bg.width;
+        const scaleY = this.height / this.bg.height;
+        const scale = Math.max(scaleX, scaleY);
+
+        this.bg.setScale(scale).setPosition(this.width / 2, this.height / 2);
     }
 
-    moveLogo (reactCallback)
-    {
-        if (this.logoTween)
-        {
-            if (this.logoTween.isPlaying())
-            {
-                this.logoTween.pause();
-            }
-            else
-            {
-                this.logoTween.play();
-            }
+    setupLogo() {
+        // Add or update logo
+        if (!this.logo) {
+            this.logo = this.add.image(this.width / 2, this.height / 2, 'logo');
         }
-        else
-        {
-            this.logoTween = this.tweens.add({
-                targets: this.logo,
-                x: { value: 750, duration: 3000, ease: 'Back.easeInOut' },
-                y: { value: 80, duration: 1500, ease: 'Sine.easeOut' },
-                yoyo: true,
-                repeat: -1,
-                onUpdate: () => {
-                    if (reactCallback)
-                    {
-                        reactCallback({
-                            x: Math.floor(this.logo.x),
-                            y: Math.floor(this.logo.y)
-                        });
-                    }
-                }
+
+        const scaleFactor = 0.8; // Adjust this value to make the logo smaller or larger
+        this.logo.setScale(scaleFactor).setPosition(this.width / 2, this.height * 0.3);
+    }
+
+    setupButtons() {
+        // Create animation for play button if it doesn't already exist
+        let playButtonAnim;
+        let leaderboardButtonAnim;
+        if (!this.anims.exists('playButtonAnim')) {
+            createButtonAnimation(this, 'playButton', 'playButtonAnim');
+            playButtonAnim = this.anims.get('playButtonAnim');
+        } else {
+            playButtonAnim = this.anims.get('playButtonAnim');
+        }
+        if (!this.anims.exists('leaderboardButtonAnim')) {
+            createButtonAnimation(this, 'leaderboardButton', 'leaderboardButtonAnim');
+            leaderboardButtonAnim = this.anims.get('leaderboardButtonAnim');
+        } else {
+            leaderboardButtonAnim = this.anims.get('leaderboardButtonAnim');
+        }
+
+        // Add or update play button
+        if (!this.playButton) {
+            this.playButton = this.add.sprite(this.width / 2, this.height / 2, 'playButton', 0); // Initialize with the first frame
+            this.playButton.setInteractive();
+            this.playButton.on('pointerdown', () => {
+                this.playButton.play(playButtonAnim);
+                this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
+                    this.scene.start('Game');
+                });
+            });
+            this.playButton.on('animationcomplete', () => {
+                this.playButton.setFrame(0); // Reset to the first frame
             });
         }
+        if (!this.leaderboardButton) {
+            this.leaderboardButton = this.add.sprite(this.width / 2, this.height / 2, 'leaderboardButton', 0); // Initialize with the first frame
+            this.leaderboardButton.setInteractive();
+            this.leaderboardButton.on('pointerdown', () => {
+                this.leaderboardButton.play(leaderboardButtonAnim);
+            });
+            this.leaderboardButton.on('animationcomplete', () => {
+                this.leaderboardButton.setFrame(0); // Reset to the first frame
+            });
+        }
+
+        const scaleFactor = 2; // Adjust this value to make the buttons smaller or larger
+        this.playButton.setScale(scaleFactor);
+        this.leaderboardButton.setScale(scaleFactor);
+
+        // Calculate positions
+        const logoBottom = this.logo.y + (this.logo.displayHeight / 2);
+        const playButtonY = logoBottom + (this.height * 0.15);
+        const leaderboardButtonY = playButtonY + (this.height * 0.125);
+
+        // Set positions
+        this.playButton.setPosition(this.width / 2, playButtonY);
+        this.leaderboardButton.setPosition(this.width / 2, leaderboardButtonY);
     }
 }

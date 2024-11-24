@@ -15,11 +15,6 @@ body {
     align-items: center;
 }
 
-.spritePosition {
-    margin: 10px 0 0 10px;
-    font-size: 0.8em;
-}
-
 .button {
     width: 140px;
     margin: 10px;
