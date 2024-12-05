@@ -39,6 +39,8 @@ export class Preloader extends Scene
         this.load.spritesheet('playButton', 'buttons/playButton.png', { frameWidth: 144, frameHeight: 72 });
         this.load.spritesheet('leaderboardButton', 'buttons/leaderboardButton.png', { frameWidth: 144, frameHeight: 72 });
 
+        this.load.image('test_tiles', 'test_assets/test_tiles.png');
+        this.load.tilemapTiledJSON('test_map', 'test_assets/test_map.json');
 
 
         // Debug logs to confirm assets are loaded
@@ -53,6 +55,9 @@ export class Preloader extends Scene
         });
         this.load.on('filecomplete-spritesheet-leaderboardButton', () => {
             console.log('leaderboardButton spritesheet loaded');
+        });
+        this.load.on('filecomplete-image-test_tiles', () => {
+            console.log('test_tiles loaded');
         });
 
         // Log any errors during the loading process
