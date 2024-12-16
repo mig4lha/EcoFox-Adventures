@@ -6,8 +6,6 @@ export class MainMenu extends Scene {
     constructor() {
         super('MainMenu');
 
-        console.log('MainMenu constructor');
-
         this.bg = null; // Store reference to background
         this.logo = null; // Store reference to logo
         this.playButton = null; // Store reference to play button

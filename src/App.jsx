@@ -1,27 +1,32 @@
-import { useRef, useState } from 'react';
-
-import Phaser from 'phaser';
+import { useRef, useState, useEffect } from 'react';
 import { PhaserGame } from './game/PhaserGame';
+import HealthBar from './components/HealthBar';
+import { EventBus } from './game/EventBus';
 
-function App ()
-{
-    //  References to the PhaserGame component (game and scene are exposed)
+function App() {
     const phaserRef = useRef();
+    const [currentScene, setCurrentScene] = useState(null);
 
-    // Event emitted from the PhaserGame component
-    const currentScene = (scene) => {
-        //  Store the current active scene
-        scene.events.on('current-scene-ready', (currentScene) => {
-            //  Set the current active scene
-            setCurrentScene(currentScene);
-        });
-    }
+    useEffect(() => {
+        const handleSceneChange = (scene) => {
+            setCurrentScene(scene);
+        };
+
+        EventBus.on('scene-change', handleSceneChange);
+
+        return () => {
+            EventBus.off('scene-change', handleSceneChange);
+        };
+    }, []);
 
     return (
         <div id="app">
-            <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />
+            <div id="game-container">
+                <PhaserGame ref={phaserRef} />
+                {currentScene === 'Game' && <HealthBar />}
+            </div>
         </div>
-    )
+    );
 }
 
-export default App
+export default App;

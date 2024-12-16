@@ -13,7 +13,7 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         width: window.innerWidth,
-        height: window.innerHeight
+        height: window.innerHeight,
     },
     scene: [
         Boot,
@@ -28,7 +28,12 @@ const config = {
             debug: true
         }
     },
-    pixelArt: true
+    pixelArt: true, // Enable pixel art rendering
+    render: {
+        pixelArt: true, // Ensure pixel art rendering
+        antialias: false, // Disable antialiasing
+        roundPixels: true // Enable rounding of pixel values
+    }
 };
 
 const StartGame = (parent) => {
