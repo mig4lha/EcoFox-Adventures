@@ -40,7 +40,7 @@ export class Game extends Scene {
         this.player.setScale(3);
 
         // Set a circular hitbox for the player sprite
-        this.player.body.setCircle(8, 9, 0); // Radius of the circle, x offset, y offset (adjust as needed)
+        this.player.body.setCircle(6, 10, 4); // Radius of the circle, x offset, y offset (adjust as needed)
 
         this.terrainLayer.setCollisionByProperty({ collides: true });
         this.platformsLayer.setCollisionByProperty({ collides: true });
@@ -108,9 +108,6 @@ export class Game extends Scene {
                 { key: 'player', frame: 'jump_5' },
                 { key: 'player', frame: 'jump_6' },
                 { key: 'player', frame: 'jump_7' },
-                { key: 'player', frame: 'jump_8' },
-                { key: 'player', frame: 'jump_9' },
-                { key: 'player', frame: 'jump_10' },
             ],
             frameRate: 10,
             repeat: 0   
@@ -128,8 +125,10 @@ export class Game extends Scene {
         // Horizontal movement (always enabled)
         if (this.cursors.left.isDown || this.keys.A.isDown) {
             this.player.setVelocityX(-speed);
+            this.player.flipX = true; // Face left
         } else if (this.cursors.right.isDown || this.keys.D.isDown) {
             this.player.setVelocityX(speed);
+            this.player.flipX = false; // Face right
         } else if (this.player.body.blocked.down) {
             this.player.setVelocityX(0);
         }
