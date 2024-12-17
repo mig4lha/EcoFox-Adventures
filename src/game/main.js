@@ -25,7 +25,8 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            debug: true
+            debug: true,
+            fps: 120
         }
     },
     pixelArt: true, // Enable pixel art rendering

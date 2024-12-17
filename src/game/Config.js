@@ -1,8 +1,9 @@
 // Global variables and settings
 export const GAME_SETTINGS = {
-    playerSpeed: 250,
-    playerJumpSpeed: -450,
-    playerGravity: 700,
+    playerSpeed: 200,
+    playerJumpSpeed: -750,
+    playerDoubleJumpSpeed: -600,
+    playerGravity: 2000,
     cameraZoom: 2,
     cameraFadeInDuration: 1000,
     tileWidth: 32,
