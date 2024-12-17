@@ -33,14 +33,15 @@ body {
     pointer-events: none; /* Prevent interactions affecting Phaser canvas */
 }
 
-.health-square {
-    width: 40px;
-    height: 40px;
-    background-color: grey;
-}
-
-.health-square.active {
-    background-color: red;
+.health-heart {
+    width: 60px;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;    /* Firefox */
+    image-rendering: -o-crisp-edges;      /* Opera */
+    image-rendering: -webkit-optimize-contrast; /* WebKit */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE (non-standard property) */
 }
 
 .button {

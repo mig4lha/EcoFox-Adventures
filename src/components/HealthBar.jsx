@@ -19,10 +19,12 @@ const HealthBar = () => {
     return (
         <div className="health-bar">
             {[...Array(3)].map((_, index) => (
-                <div
+                <img
                     key={index}
-                    className={`health-square ${index < health ? 'active' : ''}`}
-                ></div>
+                    src={index < health ? '/assets/ui/heart_full.png' : '/assets/ui/heart_empty.png'}
+                    alt="heart"
+                    className="health-heart"
+                />
             ))}
         </div>
     );

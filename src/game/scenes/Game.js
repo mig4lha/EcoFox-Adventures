@@ -187,9 +187,10 @@ export class Game extends Scene {
     }
 
     reduceHealth() {
-        if (this.playerHealth > 0) {
-            this.playerHealth -= 1;
-            EventBus.emit('health-update', this.playerHealth);
+        this.playerHealth -= 1;
+        EventBus.emit('health-update', this.playerHealth);
+        if (this.playerHealth <= 0) {
+            this.resetGame();
         }
     }
 
