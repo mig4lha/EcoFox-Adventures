@@ -16,11 +16,8 @@ export class MainMenu extends Scene {
     }
 
     create() {
-        console.log('MainMenu create');
-
         this.width = this.scale.width;
         this.height = this.scale.height;
-        console.log(`Screen dimensions Main Menu: ${this.width}x${this.height}`);
         
         // Initial setup
         this.setupBackground();
@@ -78,16 +75,30 @@ export class MainMenu extends Scene {
         if (!this.playButton) {
             this.playButton = this.add.sprite(this.width / 2, this.height / 2, 'playButton', 0); // Initialize with the first frame
             this.playButton.setInteractive();
-            this.playButton.on('pointerdown', () => {
-                this.playButton.play(playButtonAnim);
-                this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
-                    this.scene.start('Game');
-                });
+            this.playButton.on('pointerdown', (pointer) => {
+                if (pointer.event.shiftKey) {
+                    // Shift + Left Click action
+                    console.log('Shift + Left Click on Play Button');
+                    this.playButton.play(playButtonAnim);
+                    this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
+                        // Game debug map
+                        this.scene.start('DebugGame');
+                    });
+                } else {
+                    // Regular Left Click action
+                    console.log('Left Click on Play Button');
+                    this.playButton.play(playButtonAnim);
+                    this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
+                        this.scene.start('Game');
+                    });
+                }
             });
             this.playButton.on('animationcomplete', () => {
                 this.playButton.setFrame(0); // Reset to the first frame
             });
         }
+
+
         if (!this.leaderboardButton) {
             this.leaderboardButton = this.add.sprite(this.width / 2, this.height / 2, 'leaderboardButton', 0); // Initialize with the first frame
             this.leaderboardButton.setInteractive();

@@ -42,28 +42,13 @@ export class Preloader extends Scene
         this.load.image('test_tiles', 'test_assets/test_tiles.png');
         this.load.tilemapTiledJSON('test_map', 'test_assets/test_map.json');
 
-
-        // Debug logs to confirm assets are loaded
-        this.load.on('filecomplete-image-main_menu_background', () => {
-            console.log('main_menu_background loaded');
-        });
-        this.load.on('filecomplete-image-logo', () => {
-            console.log('logo loaded');
-        });
-        this.load.on('filecomplete-spritesheet-playButton', () => {
-            console.log('playButton spritesheet loaded');
-        });
-        this.load.on('filecomplete-spritesheet-leaderboardButton', () => {
-            console.log('leaderboardButton spritesheet loaded');
-        });
-        this.load.on('filecomplete-image-test_tiles', () => {
-            console.log('test_tiles loaded');
-        });
+        console.clear();
 
         // Log any errors during the loading process
         this.load.on('loaderror', (file) => {
             console.error(`Failed to load file: ${file.key}`);
         });
+
     }
 
     create ()

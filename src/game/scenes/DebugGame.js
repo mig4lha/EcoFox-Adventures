@@ -2,9 +2,9 @@ import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
 import { GAME_SETTINGS } from '../Config';
 
-export class Game extends Scene {
+export class DebugGame extends Scene {
     constructor() {
-        super('Game');
+        super('DebugGame');
         this.playerHealth = 3; // Initialize player health
         this.canDoubleJump = false; // Track if the player can double jump
     }
@@ -12,11 +12,9 @@ export class Game extends Scene {
     preload() {
         // Load the assets for the game - Replace with your own assets
         this.load.setPath('assets');
-
         // this.load.image('player', 'test_assets/player.png');
-        this.load.image('props', 'tiles/TX Village Props.png');
-        this.load.image('tileset', 'tiles/TX Tileset Ground-export.png');
-        this.load.tilemapTiledJSON('level1', 'levels/level1.json');
+        this.load.image('test_tiles', 'test_assets/test_tiles_mod.png');
+        this.load.tilemapTiledJSON('test_map', 'levels/test_map.json');
 
         this.load.atlas('player', 'characters/fox_spritesheet.png', 'characters/fox_spritesheet.json');
     }
@@ -24,25 +22,12 @@ export class Game extends Scene {
     create() {
         this.cameras.main.setBackgroundColor(GAME_SETTINGS.backgroundColor);
         
-        const map = this.make.tilemap({ key: 'level1' });
-        const tileset = map.addTilesetImage('tileset', 'TX Tileset Ground-export', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
-        const props = map.addTilesetImage('props', 'TX Village Props', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
+        const map = this.make.tilemap({ key: 'test_map' });
+        const tileset = map.addTilesetImage('test_tiles', 'test_tiles', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight, GAME_SETTINGS.tileMargin, GAME_SETTINGS.tileSpacing);
         
-        this.backgroundLayer1 = map.createLayer('background_layer_1', tileset, 0, 0);
-        this.backgroundLayer2 = map.createLayer('background_layer_2', tileset, 0, 0);
-        this.backgroundLayer3 = map.createLayer('background_layer_3', tileset, 0, 0);
-
-        this.backgroundCaveLayer = map.createLayer('Background', tileset, 0, 0);
+        this.backgroundLayer = map.createLayer('Background', tileset, 0, 0);
         this.terrainLayer = map.createLayer('Terrain', tileset, 0, 0);
-        this.terrainPropsLayer = map.createLayer('Terrain_props', props, 0, 0);
         this.platformsLayer = map.createLayer('Platforms', tileset, 0, 0);
-
-        this.propsLayer = map.createLayer('Props', props, 0, 0);
-        this.props2Layer = map.createLayer('Props_2', props, 0, 0);
-        this.props3Layer = map.createLayer('Props_3', props, 0, 0);
-        this.props4Layer = map.createLayer('Props_4', props, 0, 0);
-        
-        this.interactables = map.createLayer('Interactables', props, 0, 0);
 
         this.playerX = map.getObjectLayer('Player Spawn').objects[0].x;
         this.playerY = map.getObjectLayer('Player Spawn').objects[0].y;
@@ -58,11 +43,9 @@ export class Game extends Scene {
         this.player.body.setCircle(6, 10, 4); // Radius of the circle, x offset, y offset (adjust as needed)
 
         this.terrainLayer.setCollisionByProperty({ collides: true });
-        this.terrainPropsLayer.setCollisionByProperty({ collides: true });
         this.platformsLayer.setCollisionByProperty({ collides: true });
 
         this.physics.add.collider(this.player, this.terrainLayer);
-        this.physics.add.collider(this.player, this.terrainPropsLayer);
         this.physics.add.collider(this.player, this.platformsLayer);
 
         // Set the camera bounds to the size of the map
@@ -81,7 +64,7 @@ export class Game extends Scene {
         this.cameras.main.fadeIn(GAME_SETTINGS.cameraFadeInDuration);
 
         EventBus.emit('current-scene-ready', this);
-        EventBus.emit('scene-change', 'Game'); // Emit scene change event
+        EventBus.emit('scene-change', 'DebugGame'); // Emit scene change event
 
         // Set up input handling
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -132,6 +115,17 @@ export class Game extends Scene {
     
         // Play the idle animation by default
         this.player.play('idle');
+
+        console.log('Camera dimensions:', this.cameras.main.width, this.cameras.main.height);
+        this.debugText = this.add.text(440, this.scale.height - 248, 'Debug Level', {
+            fontSize: '16px',
+            fill: '#ffffff',
+            fontFamily: 'Arial',
+            backgroundColor: '#000000' // Optional for visibility
+        })
+            .setOrigin(0, 1) // Bottom-left alignment
+            .setScrollFactor(0); // Makes the text static relative to the viewport
+
     }
 
     update() {

@@ -23,7 +23,7 @@ function App() {
         <div id="app">
             <div id="game-container">
                 <PhaserGame ref={phaserRef} />
-                {currentScene === 'Game' && <HealthBar />}
+                {(currentScene === 'Game' || currentScene === 'DebugGame') && <HealthBar />}
             </div>
         </div>
     );
