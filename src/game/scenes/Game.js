@@ -10,15 +10,18 @@ export class Game extends Scene {
     }
 
     preload() {
+
+        console.clear();
+
         // Load the assets for the game - Replace with your own assets
         this.load.setPath('assets');
 
         // this.load.image('player', 'test_assets/player.png');
         this.load.image('props', 'tiles/props.png');
         this.load.image('tileset', 'tiles/tileset.png');
-        this.load.image('background_layer_1', 'backgrounds/background_layer_1.png');
-        this.load.image('background_layer_2', 'backgrounds/background_layer_2.png');
-        this.load.image('background_layer_3', 'backgrounds/background_layer_3.png');
+        this.load.image('background_layer_1', 'backgrounds/background_layer_1_extended_2.png');
+        this.load.image('background_layer_2', 'backgrounds/background_layer_2_extended_2.png');
+        this.load.image('background_layer_3', 'backgrounds/background_layer_3_extended_2.png');
 
         this.load.tilemapTiledJSON('level1', 'levels/level1.json');
 
@@ -27,39 +30,21 @@ export class Game extends Scene {
 
     create() {
         this.cameras.main.setBackgroundColor(GAME_SETTINGS.backgroundColor);
+
+        this.initialCameraX = this.cameras.main.scrollX;
+        this.initialCameraY = this.cameras.main.scrollY;
         
         const map = this.make.tilemap({ key: 'level1' });
         const tileset = map.addTilesetImage('tileset', 'tileset', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
         const props = map.addTilesetImage('props', 'props', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
         
-        // 3 image layers
-        const backgroundLayer1Data = map.getImageLayer('background_layer_1');
-        const backgroundLayer2Data = map.getImageLayer('background_layer_2');
-        const backgroundLayer3Data = map.getImageLayer('background_layer_3');
-
-        if (backgroundLayer1Data) {
-            this.backgroundLayer1 = this.add.image(
-                backgroundLayer1Data.x,
-                backgroundLayer1Data.y,
-                'background_layer_1'
-            ).setOrigin(0);
-        }
-
-        if (backgroundLayer2Data) {
-            this.backgroundLayer2 = this.add.image(
-                backgroundLayer2Data.x,
-                backgroundLayer2Data.y,
-                'background_layer_2'
-            ).setOrigin(0);
-        }
-
-        if (backgroundLayer3Data) {
-            this.backgroundLayer3 = this.add.image(
-                backgroundLayer3Data.x,
-                backgroundLayer3Data.y,
-                'background_layer_3'
-            ).setOrigin(0);
-        }
+        // Add background images
+        this.backgroundLayer1 = this.add.image(0, 0, 'background_layer_1')
+            .setOrigin(0, 0); 
+        this.backgroundLayer2 = this.add.image(0, 0, 'background_layer_2')
+            .setOrigin(0, 0);
+        this.backgroundLayer3 = this.add.image(0, 0, 'background_layer_3')
+            .setOrigin(0, 0);
 
         this.backgroundCaveLayer = map.createLayer('Background', tileset, 0, 0);
         this.terrainLayer = map.createLayer('Terrain', tileset, 0, 0);
@@ -75,16 +60,15 @@ export class Game extends Scene {
 
         this.playerX = map.getObjectLayer('Player Spawn').objects[0].x;
         this.playerY = map.getObjectLayer('Player Spawn').objects[0].y;
-        console.log(this.playerX, this.playerY);
 
         this.player = this.physics.add.sprite(this.playerX, this.playerY, 'player', 'idle_0');
         this.player.setCollideWorldBounds(true);
         this.player.setGravityY(GAME_SETTINGS.playerGravity); // Set gravity for the player
 
-        this.player.setScale(3);
+        this.player.setScale(2.5);
 
         // Set a circular hitbox for the player sprite
-        this.player.body.setCircle(6, 10, 4); // Radius of the circle, x offset, y offset (adjust as needed)
+        this.player.body.setCircle(6, 11, 4); // Radius of the circle, x offset, y offset (adjust as needed)
 
         this.terrainLayer.setCollisionByProperty({ collides: true });
         this.terrainPropsLayer.setCollisionByProperty({ collides: true });
@@ -94,11 +78,22 @@ export class Game extends Scene {
         this.physics.add.collider(this.player, this.terrainPropsLayer);
         this.physics.add.collider(this.player, this.platformsLayer);
 
-        // Set the camera bounds to the size of the map
+        // Set the camera and world bounds to match the map size
         this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+        this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+
+        // Ensure player is properly constrained within the world bounds
+        this.player.setCollideWorldBounds(true);
+
+        // Debugging visualization
+        // this.terrainLayer.renderDebug(this.add.graphics(), {
+        //     tileColor: null,
+        //     collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
+        //     faceColor: new Phaser.Display.Color(40, 39, 37, 255)
+        // });
 
         // Set the camera to follow the player
-        this.cameras.main.startFollow(this.player);
+        this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
 
         // Enable rounding of pixel values to prevent sub-pixel rendering
         this.cameras.main.roundPixels = true;
@@ -167,6 +162,13 @@ export class Game extends Scene {
         const speed = GAME_SETTINGS.playerSpeed;
         const jumpSpeed = GAME_SETTINGS.playerJumpSpeed;
         const doubleJumpSpeed = GAME_SETTINGS.playerDoubleJumpSpeed;
+    
+        const cameraX = this.cameras.main.scrollX;
+
+        // Calculate parallax effect based on the camera's position
+        this.backgroundLayer1.x = cameraX * -0.0125 - 30; // Slowest, furthest background
+        this.backgroundLayer2.x = cameraX * -0.025 - 30; // Mid-speed background
+        this.backgroundLayer3.x = cameraX * -0.05 - 30; // Fastest, closest background
 
         // Horizontal movement (always enabled)
         if (this.cursors.left.isDown || this.keys.A.isDown) {
@@ -178,53 +180,51 @@ export class Game extends Scene {
         } else if (this.player.body.blocked.down) {
             this.player.setVelocityX(0);
         }
-
+    
         // Jump and double jump
         if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keys.W) || Phaser.Input.Keyboard.JustDown(this.cursors.space)) {
             if (this.player.body.blocked.down) {
-                console.log('Jumping');
                 this.player.setVelocityY(jumpSpeed);
                 this.player.play('jump', true);
                 this.canDoubleJump = true; // Enable double jump after initial jump
             } else if (this.canDoubleJump) {
-                console.log('Double Jumping');
                 this.player.setVelocityY(doubleJumpSpeed);
                 this.player.play('jump', true);
                 this.canDoubleJump = false; // Disable double jump after it's used
             }
         }
-
+    
         // Animation handling
         if (this.player.body.velocity.y !== 0) {
-            // Player is in the air, play the jump animation
             this.player.play('jump', true);
         } else if (this.player.body.velocity.x !== 0) {
-            // Player is on the ground and moving, play the run animation
             this.player.play('run', true);
         } else {
-            // Player is on the ground and not moving, play the idle animation
             this.player.play('idle', true);
         }
-
+    
         if (this.player.body.blocked.down && this.player.anims.currentAnim.key === 'jump') {
             this.player.play('idle', true);
         }
-
+    
         // Handle health reduction when H key is pressed
         if (Phaser.Input.Keyboard.JustDown(this.keys.H)) {
             this.reduceHealth();
         }
-
+    
         // Handle game restart when R key is pressed
         if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
             this.resetGame();
         }
-
-         // Safety check
+    
+        // Safety check
         if (this.player.y > this.physics.world.bounds.height || this.player.y < 0 || this.player.x < 0 || this.player.x > this.physics.world.bounds.width) {
             this.resetGame();
-        }   
+        }
     }
+    
+
+    
 
     onPlayerLanded() {
         if (this.player.body.blocked.down) {

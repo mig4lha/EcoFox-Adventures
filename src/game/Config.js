@@ -3,7 +3,7 @@ export const GAME_SETTINGS = {
     playerSpeed: 200,
     playerJumpSpeed: -750,
     playerDoubleJumpSpeed: -600,
-    playerGravity: 2000,
+    playerGravity: 2500,
     cameraZoom: 2,
     cameraFadeInDuration: 1000,
     tileWidth: 32,
