@@ -427,37 +427,70 @@
          "name":"Enemy Spawn",
          "objects":[
                 {
-                 "height":96,
+                 "height":32,
                  "id":7,
                  "name":"enemy_spawn_2",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":480,
-                 "x":1344,
-                 "y":608
+                 "width":544,
+                 "x":1312,
+                 "y":672
                 }, 
                 {
-                 "height":96,
+                 "height":32,
                  "id":9,
                  "name":"enemy_spawn_1",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":448,
-                 "x":512,
-                 "y":480
+                 "width":512,
+                 "x":480,
+                 "y":544
                 }, 
                 {
-                 "height":96,
+                 "height":32,
                  "id":10,
+                 "name":"enemy_spawn_6",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":256,
+                 "x":4224,
+                 "y":416
+                }, 
+                {
+                 "height":32,
+                 "id":14,
+                 "name":"enemy_spawn_5",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":256,
+                 "x":3680,
+                 "y":512
+                }, 
+                {
+                 "height":32,
+                 "id":15,
                  "name":"enemy_spawn_3",
                  "rotation":0,
                  "type":"",
                  "visible":true,
-                 "width":224,
-                 "x":4256,
-                 "y":352
+                 "width":256,
+                 "x":2336,
+                 "y":480
+                }, 
+                {
+                 "height":32,
+                 "id":16,
+                 "name":"enemy_spawn_4",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":256,
+                 "x":2816,
+                 "y":384
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -521,7 +554,7 @@
          "y":0
         }],
  "nextlayerid":19,
- "nextobjectid":13,
+ "nextobjectid":17,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.11.0",

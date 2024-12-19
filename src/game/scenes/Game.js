@@ -7,16 +7,16 @@ export class Game extends Scene {
         super('Game');
         this.playerHealth = 3; // Initialize player health
         this.canDoubleJump = false; // Track if the player can double jump
+        this.isInvulnerable = false; // Player is not invulnerable at the start
     }
 
     preload() {
 
-        console.clear();
+        // console.clear();
 
-        // Load the assets for the game - Replace with your own assets
+        // Load the assets for the game scene
         this.load.setPath('assets');
 
-        // this.load.image('player', 'test_assets/player.png');
         this.load.image('props', 'tiles/props.png');
         this.load.image('tileset', 'tiles/tileset.png');
         this.load.image('background_layer_1', 'backgrounds/background_layer_1_extended_2.png');
@@ -26,10 +26,18 @@ export class Game extends Scene {
         this.load.tilemapTiledJSON('level1', 'levels/level1.json');
 
         this.load.atlas('player', 'characters/fox_spritesheet.png', 'characters/fox_spritesheet.json');
+
+        this.load.image('enemy', 'enemies/bichinho.png');
+        this.load.audio('enemyDeathSound', 'audio/bichinho_morto.mp3');
+        this.load.image('enemyDeath', 'enemies/bichinho_morto.png'); // Load the enemy death sprite
     }
 
     create() {
         this.cameras.main.setBackgroundColor(GAME_SETTINGS.backgroundColor);
+
+        this.isInvulnerable = false; // Player is not invulnerable at the start
+
+        this.enemies = this.physics.add.group();
 
         this.initialCameraX = this.cameras.main.scrollX;
         this.initialCameraY = this.cameras.main.scrollY;
@@ -103,6 +111,63 @@ export class Game extends Scene {
 
         // Fade in the scene
         this.cameras.main.fadeIn(GAME_SETTINGS.cameraFadeInDuration);
+        
+        const enemyObjects = map.getObjectLayer('Enemy Spawn').objects;
+        enemyObjects.forEach((enemyObject) => {
+            // if (enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
+                // Get the enemy's original width from the texture
+                const enemyTexture = this.textures.get('enemy');
+                const enemyFrame = enemyTexture.get();
+        
+                const originalEnemyWidth = enemyFrame.width;
+                const enemyScale = 0.10;
+        
+                // Calculate the enemy's display width after scaling
+                const enemyDisplayWidth = originalEnemyWidth * enemyScale;
+        
+                // Number of enemies to spawn
+                var numEnemies = 1;
+
+                if(enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
+                    numEnemies = 2;
+                }
+
+                const patrolAreaWidth = enemyObject.width / numEnemies;
+        
+                // Loop to create multiple enemies
+                for (let i = 0; i < numEnemies; i++) {
+
+                    // Calculate the patrol area's start X coordinate
+                    const patrolStartX = enemyObject.x + i * patrolAreaWidth;
+        
+                    // Center the enemy within its patrol area
+                    const enemyX = patrolStartX + (patrolAreaWidth - enemyDisplayWidth) / 2;
+        
+                    // Create the enemy at the calculated position
+                    const enemy = this.enemies.create(enemyX, enemyObject.y, 'enemy');
+                    enemy.setScale(enemyScale);
+                    enemy.setCollideWorldBounds(true);
+
+                    // Assign hit points to the enemy
+                    enemy.hitPoints = 1; // Set the number of hits required to defeat the enemy
+        
+                    // Set initial movement properties
+                    enemy.setVelocityX(50); // Adjust speed as needed
+                    enemy.patrolDirection = 1; // 1 for right, -1 for left
+        
+                    // Set movement boundaries for the enemy
+                    enemy.minX = patrolStartX + 32;
+                    enemy.maxX = patrolStartX + patrolAreaWidth - enemyDisplayWidth + 32;
+                }
+            // }
+        });
+
+        // Collide enemies with terrain
+        this.physics.add.collider(this.enemies, this.terrainLayer);
+
+        // Detect collision between player and enemies
+        // this.physics.add.overlap(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
 
         EventBus.emit('current-scene-ready', this);
         EventBus.emit('scene-change', 'Game'); // Emit scene change event
@@ -166,9 +231,26 @@ export class Game extends Scene {
         const cameraX = this.cameras.main.scrollX;
 
         // Calculate parallax effect based on the camera's position
-        this.backgroundLayer1.x = cameraX * -0.0125 - 30; // Slowest, furthest background
-        this.backgroundLayer2.x = cameraX * -0.025 - 30; // Mid-speed background
-        this.backgroundLayer3.x = cameraX * -0.05 - 30; // Fastest, closest background
+        this.backgroundLayer1.x = cameraX * -0.02 - 30; // Slowest, furthest background
+        this.backgroundLayer2.x = cameraX * -0.05 - 30; // Mid-speed background
+        this.backgroundLayer3.x = cameraX * -0.08 - 30; // Fastest, closest background
+
+        // Update enemies' movement
+        this.enemies.children.iterate((enemy) => {
+            // Move enemy based on patrol direction
+            enemy.setVelocityX(50 * enemy.patrolDirection);
+
+            // Reverse direction upon reaching boundaries
+            if (enemy.x >= enemy.maxX) {
+                enemy.x = enemy.maxX; // Correct position
+                enemy.patrolDirection = -1; // Change direction to left
+                enemy.flipX = false; // Flip sprite horizontally if needed
+            } else if (enemy.x <= enemy.minX) {
+                enemy.x = enemy.minX; // Correct position
+                enemy.patrolDirection = 1; // Change direction to right
+                enemy.flipX = true; // Reset sprite flip if needed
+            }
+        });
 
         // Horizontal movement (always enabled)
         if (this.cursors.left.isDown || this.keys.A.isDown) {
@@ -207,11 +289,6 @@ export class Game extends Scene {
             this.player.play('idle', true);
         }
     
-        // Handle health reduction when H key is pressed
-        if (Phaser.Input.Keyboard.JustDown(this.keys.H)) {
-            this.reduceHealth();
-        }
-    
         // Handle game restart when R key is pressed
         if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
             this.resetGame();
@@ -223,8 +300,65 @@ export class Game extends Scene {
         }
     }
     
-
+    handlePlayerEnemyCollision(player, enemy) {
+        if (player.body.velocity.y > 0 && player.y < enemy.y) {
+            // Player jumps on enemy
+            this.damageEnemy(enemy);
+            player.setVelocityY(-500); // Bounce player upwards
+        } else if (!this.isInvulnerable) {
+            // Player takes damage
+            this.reduceHealth();
+            this.triggerInvulnerability();
+        }
+    }
     
+    damageEnemy(enemy) {
+        enemy.hitPoints -= 1;
+    
+        if (enemy.hitPoints <= 0) {
+            // Play the death sound
+            this.sound.play('enemyDeathSound');
+    
+            // Change the sprite to the enemy death sprite
+            enemy.setTexture('enemyDeath');
+    
+            // Offset the death sprite on the Y axis
+            enemy.y += 28; // Adjust the value as needed
+    
+            // Disable the physics body to make the sprite static and remove hitbox
+            enemy.body.setVelocity(0);
+            enemy.body.setImmovable(true);
+            enemy.body.moves = false;
+            enemy.body.enable = false; // Disable the physics body
+    
+            // Set a timer to destroy the enemy after 3 seconds
+            this.time.delayedCall(3000, () => {
+                enemy.destroy();
+            }, [], this);
+        } else {
+            // Optional: Visual feedback for enemy hurt
+        }
+    }
+
+    triggerInvulnerability() {
+        this.isInvulnerable = true;
+    
+        // Start blinking effect
+        this.invulnerabilityEffect = this.tweens.add({
+            targets: this.player,
+            alpha: { from: 0.5, to: 0 },
+            ease: 'Linear',
+            duration: 200,
+            repeat: -1,
+            yoyo: true
+        });
+    
+        this.time.delayedCall(GAME_SETTINGS.playerInvulnerabilityTime, () => {
+            this.isInvulnerable = false;
+            this.invulnerabilityEffect.stop();
+            this.player.setAlpha(1); // Ensure player is fully opaque
+        }, [], this);
+    }
 
     onPlayerLanded() {
         if (this.player.body.blocked.down) {
@@ -234,6 +368,7 @@ export class Game extends Scene {
 
     reduceHealth() {
         this.playerHealth -= 1;
+        console.log(`Player health: ${this.playerHealth}`);
         EventBus.emit('health-update', this.playerHealth);
         if (this.playerHealth <= 0) {
             this.resetGame();
