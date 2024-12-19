@@ -14,8 +14,12 @@ export class Game extends Scene {
         this.load.setPath('assets');
 
         // this.load.image('player', 'test_assets/player.png');
-        this.load.image('props', 'tiles/TX Village Props.png');
-        this.load.image('tileset', 'tiles/TX Tileset Ground-export.png');
+        this.load.image('props', 'tiles/props.png');
+        this.load.image('tileset', 'tiles/tileset.png');
+        this.load.image('background_layer_1', 'backgrounds/background_layer_1.png');
+        this.load.image('background_layer_2', 'backgrounds/background_layer_2.png');
+        this.load.image('background_layer_3', 'backgrounds/background_layer_3.png');
+
         this.load.tilemapTiledJSON('level1', 'levels/level1.json');
 
         this.load.atlas('player', 'characters/fox_spritesheet.png', 'characters/fox_spritesheet.json');
@@ -25,22 +29,47 @@ export class Game extends Scene {
         this.cameras.main.setBackgroundColor(GAME_SETTINGS.backgroundColor);
         
         const map = this.make.tilemap({ key: 'level1' });
-        const tileset = map.addTilesetImage('tileset', 'TX Tileset Ground-export', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
-        const props = map.addTilesetImage('props', 'TX Village Props', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
+        const tileset = map.addTilesetImage('tileset', 'tileset', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
+        const props = map.addTilesetImage('props', 'props', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
         
-        this.backgroundLayer1 = map.createLayer('background_layer_1', tileset, 0, 0);
-        this.backgroundLayer2 = map.createLayer('background_layer_2', tileset, 0, 0);
-        this.backgroundLayer3 = map.createLayer('background_layer_3', tileset, 0, 0);
+        // 3 image layers
+        const backgroundLayer1Data = map.getImageLayer('background_layer_1');
+        const backgroundLayer2Data = map.getImageLayer('background_layer_2');
+        const backgroundLayer3Data = map.getImageLayer('background_layer_3');
+
+        if (backgroundLayer1Data) {
+            this.backgroundLayer1 = this.add.image(
+                backgroundLayer1Data.x,
+                backgroundLayer1Data.y,
+                'background_layer_1'
+            ).setOrigin(0);
+        }
+
+        if (backgroundLayer2Data) {
+            this.backgroundLayer2 = this.add.image(
+                backgroundLayer2Data.x,
+                backgroundLayer2Data.y,
+                'background_layer_2'
+            ).setOrigin(0);
+        }
+
+        if (backgroundLayer3Data) {
+            this.backgroundLayer3 = this.add.image(
+                backgroundLayer3Data.x,
+                backgroundLayer3Data.y,
+                'background_layer_3'
+            ).setOrigin(0);
+        }
 
         this.backgroundCaveLayer = map.createLayer('Background', tileset, 0, 0);
         this.terrainLayer = map.createLayer('Terrain', tileset, 0, 0);
         this.terrainPropsLayer = map.createLayer('Terrain_props', props, 0, 0);
         this.platformsLayer = map.createLayer('Platforms', tileset, 0, 0);
 
-        this.propsLayer = map.createLayer('Props', props, 0, 0);
-        this.props2Layer = map.createLayer('Props_2', props, 0, 0);
-        this.props3Layer = map.createLayer('Props_3', props, 0, 0);
-        this.props4Layer = map.createLayer('Props_4', props, 0, 0);
+        this.propsLayer = map.createLayer('Props_4', props, 0, 0);
+        this.props2Layer = map.createLayer('Props_3', props, 0, 0);
+        this.props3Layer = map.createLayer('Props_2', props, 0, 0);
+        this.props4Layer = map.createLayer('Props', props, 0, 0);
         
         this.interactables = map.createLayer('Interactables', props, 0, 0);
 
