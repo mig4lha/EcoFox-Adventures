@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { PhaserGame } from './game/PhaserGame';
 import HealthBar from './components/HealthBar';
+import CollectableBar from './components/CollectableBar';
 import { EventBus } from './game/EventBus';
 
 function App() {
@@ -24,6 +25,12 @@ function App() {
             <div id="game-container">
                 <PhaserGame ref={phaserRef} />
                 {(currentScene === 'Game' || currentScene === 'DebugGame') && <HealthBar />}
+                {(currentScene === 'Game' || currentScene === 'DebugGame') && (
+                    <CollectableBar
+                        collectableAsset="/assets/collectables/moedinha_gray.png"
+                        collectedAsset="/assets/collectables/moedinha.png"
+                    />
+                )}
             </div>
         </div>
     );

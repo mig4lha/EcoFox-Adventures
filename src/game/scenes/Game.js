@@ -8,6 +8,7 @@ export class Game extends Scene {
         this.playerHealth = 3; // Initialize player health
         this.canDoubleJump = false; // Track if the player can double jump
         this.isInvulnerable = false; // Player is not invulnerable at the start
+        this.hitboxVisible = false; // Hitbox visualization is disabled by default
     }
 
     preload() {
@@ -27,9 +28,11 @@ export class Game extends Scene {
 
         this.load.atlas('player', 'characters/fox_spritesheet.png', 'characters/fox_spritesheet.json');
 
-        this.load.image('enemy', 'enemies/bichinho.png');
-        this.load.audio('enemyDeathSound', 'audio/bichinho_morto.mp3');
-        this.load.image('enemyDeath', 'enemies/bichinho_morto.png'); // Load the enemy death sprite
+        this.load.image('enemy1', 'enemies/bichinho.png');
+        this.load.audio('enemyDeathSound1', 'audio/bichinho_morto.mp3');
+        this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
+
+        this.load.image('collectable', 'collectables/moedinha.png');
     }
 
     create() {
@@ -76,7 +79,7 @@ export class Game extends Scene {
         this.player.setScale(2.5);
 
         // Set a circular hitbox for the player sprite
-        this.player.body.setCircle(6, 11, 4); // Radius of the circle, x offset, y offset (adjust as needed)
+        this.player.body.setCircle(6, 10, 4); // Radius of the circle, x offset, y offset (adjust as needed)
 
         this.terrainLayer.setCollisionByProperty({ collides: true });
         this.terrainPropsLayer.setCollisionByProperty({ collides: true });
@@ -87,11 +90,14 @@ export class Game extends Scene {
         this.physics.add.collider(this.player, this.platformsLayer);
 
         // Set the camera and world bounds to match the map size
-        this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
-        this.physics.world.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+        this.cameras.main.setBounds(5, 0, map.widthInPixels - 10, map.heightInPixels);
+        this.physics.world.setBounds(5, 0, map.widthInPixels - 10, map.heightInPixels);
 
         // Ensure player is properly constrained within the world bounds
         this.player.setCollideWorldBounds(true);
+
+        this.player.body.debugShowBody = false;
+        this.player.body.debugShowVelocity = false;
 
         // Debugging visualization
         // this.terrainLayer.renderDebug(this.add.graphics(), {
@@ -116,7 +122,7 @@ export class Game extends Scene {
         enemyObjects.forEach((enemyObject) => {
             // if (enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
                 // Get the enemy's original width from the texture
-                const enemyTexture = this.textures.get('enemy');
+                const enemyTexture = this.textures.get('enemy1');
                 const enemyFrame = enemyTexture.get();
         
                 const originalEnemyWidth = enemyFrame.width;
@@ -144,9 +150,12 @@ export class Game extends Scene {
                     const enemyX = patrolStartX + (patrolAreaWidth - enemyDisplayWidth) / 2;
         
                     // Create the enemy at the calculated position
-                    const enemy = this.enemies.create(enemyX, enemyObject.y, 'enemy');
+                    const enemy = this.enemies.create(enemyX, enemyObject.y, 'enemy1');
                     enemy.setScale(enemyScale);
                     enemy.setCollideWorldBounds(true);
+            
+                    enemy.body.debugShowBody = false;
+                    enemy.body.debugShowVelocity = false;
 
                     // Assign hit points to the enemy
                     enemy.hitPoints = 1; // Set the number of hits required to defeat the enemy
@@ -166,8 +175,34 @@ export class Game extends Scene {
         this.physics.add.collider(this.enemies, this.terrainLayer);
 
         // Detect collision between player and enemies
-        // this.physics.add.overlap(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+
+        // Variable to track collected items
+        this.collectedItems = [];
+
+        // Create a group for collectables
+        this.collectables = this.physics.add.group();
+
+        // Retrieve collectable objects from the 'Collectables' object layer
+        const collectableObjects = map.getObjectLayer('Collectables').objects;
+
+        collectableObjects.forEach((collectableObject) => {
+            // Create a collectable at the specified position
+            const collectable = this.collectables.create(collectableObject.x, collectableObject.y, 'collectable');
+            collectable.setOrigin(0.5, 0.5); // Use default origin
+            collectable.name = collectableObject.name; // e.g., 'collectable_1'
+            collectable.body.setAllowGravity(false); // Collectables don't need gravity
+            collectable.setImmovable(true);
+        
+            collectable.body.debugShowBody = false;
+            collectable.body.debugShowVelocity = false;
+        
+            collectable.setScale(0.015);
+            collectable.y += 5; 
+        });
+
+        // Add overlap between the player and collectables
+        this.physics.add.overlap(this.player, this.collectables, this.collectItem, null, this);
 
         EventBus.emit('current-scene-ready', this);
         EventBus.emit('scene-change', 'Game'); // Emit scene change event
@@ -288,6 +323,11 @@ export class Game extends Scene {
         if (this.player.body.blocked.down && this.player.anims.currentAnim.key === 'jump') {
             this.player.play('idle', true);
         }
+
+        // Toggle hitbox visualization when H key is pressed
+        if (Phaser.Input.Keyboard.JustDown(this.keys.H)) {
+            this.toggleHitboxVisualization();
+        }
     
         // Handle game restart when R key is pressed
         if (Phaser.Input.Keyboard.JustDown(this.keys.R)) {
@@ -317,10 +357,10 @@ export class Game extends Scene {
     
         if (enemy.hitPoints <= 0) {
             // Play the death sound
-            this.sound.play('enemyDeathSound');
+            this.sound.play('enemyDeathSound1', { volume: 0.05 });
     
             // Change the sprite to the enemy death sprite
-            enemy.setTexture('enemyDeath');
+            enemy.setTexture('enemyDeath1');
     
             // Offset the death sprite on the Y axis
             enemy.y += 28; // Adjust the value as needed
@@ -337,6 +377,44 @@ export class Game extends Scene {
             }, [], this);
         } else {
             // Optional: Visual feedback for enemy hurt
+        }
+    }
+
+    toggleHitboxVisualization() {
+        this.hitboxVisible = !this.hitboxVisible;
+    
+        if (this.hitboxVisible) {
+            // Enable hitbox visualization for player
+            this.player.body.debugShowBody = true;
+            this.player.body.debugShowVelocity = true;
+    
+            // Enable hitbox visualization for enemies
+            this.enemies.children.iterate((enemy) => {
+                enemy.body.debugShowBody = true;
+                enemy.body.debugShowVelocity = true;
+            });
+    
+            // Enable hitbox visualization for collectables
+            this.collectables.children.iterate((collectable) => {
+                collectable.body.debugShowBody = true;
+                collectable.body.debugShowVelocity = true;
+            });
+        } else {
+            // Disable hitbox visualization for player
+            this.player.body.debugShowBody = false;
+            this.player.body.debugShowVelocity = false;
+    
+            // Disable hitbox visualization for enemies
+            this.enemies.children.iterate((enemy) => {
+                enemy.body.debugShowBody = false;
+                enemy.body.debugShowVelocity = false;
+            });
+    
+            // Disable hitbox visualization for collectables
+            this.collectables.children.iterate((collectable) => {
+                collectable.body.debugShowBody = false;
+                collectable.body.debugShowVelocity = false;
+            });
         }
     }
 
@@ -360,6 +438,26 @@ export class Game extends Scene {
         }, [], this);
     }
 
+    collectItem(player, collectable) {
+        // Add to collected items array
+        this.collectedItems.push(collectable.name);
+    
+        console.log(`Collected items: ${this.collectedItems}`);
+    
+        // Disable the collectable
+        collectable.destroy();
+    
+        // Emit collectable update event
+        EventBus.emit('collectable-update', this.collectedItems);
+    
+        // Optionally, play a sound or animation
+        // this.sound.play('collectSound');
+    
+        // Update score or UI if needed
+        // this.score += 10;
+        // this.scoreText.setText('Score: ' + this.score);
+    }
+
     onPlayerLanded() {
         if (this.player.body.blocked.down) {
             this.canDoubleJump = false; // Reset double jump when player lands
@@ -377,6 +475,8 @@ export class Game extends Scene {
 
     resetGame() {
         this.playerHealth = 3; // Reset player health
+        this.collectedItems = []; // Clear collected items array
+        EventBus.emit('collectable-update', this.collectedItems); // Emit collectable update event
         EventBus.emit('health-update', this.playerHealth); // Emit health update event
         this.scene.restart(); // Restart the scene
     }

@@ -40,7 +40,7 @@ export class Preloader extends Scene
         this.load.spritesheet('leaderboardButton', 'buttons/leaderboardButton.png', { frameWidth: 144, frameHeight: 72 });
 
         this.load.image('test_tiles', 'test_assets/test_tiles.png');
-        this.load.tilemapTiledJSON('test_map', 'test_assets/test_map.json');
+        this.load.tilemapTiledJSON('test_map', 'levels/test_map.json');
 
         console.clear();
 

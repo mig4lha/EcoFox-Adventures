@@ -70,3 +70,25 @@ body {
         color: rgba(255, 255, 255, 0.3);
     }
 }
+
+.collectable-bar {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+    pointer-events: none; /* Prevent interactions affecting Phaser canvas */
+}
+
+.collectable-icon {
+    width: 64px;
+    height: 64px;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;    /* Firefox */
+    image-rendering: -o-crisp-edges;      /* Opera */
+    image-rendering: -webkit-optimize-contrast; /* WebKit */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE (non-standard property) */
+}

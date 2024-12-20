@@ -379,19 +379,8 @@
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":5280,
+                 "x":5312,
                  "y":704
-                }, 
-                {
-                 "height":4.5,
-                 "id":2,
-                 "name":"",
-                 "rotation":0,
-                 "type":"",
-                 "visible":true,
-                 "width":0,
-                 "x":5117,
-                 "y":612.5
                 }, 
                 {
                  "height":32,
@@ -401,8 +390,8 @@
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":3744,
-                 "y":607.333333333333
+                 "x":3776,
+                 "y":608
                 }, 
                 {
                  "height":32,
