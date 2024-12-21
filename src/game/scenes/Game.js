@@ -204,6 +204,24 @@ export class Game extends Scene {
         // Add overlap between the player and collectables
         this.physics.add.overlap(this.player, this.collectables, this.collectItem, null, this);
 
+        // Retrieve death zone objects from the 'Death Zones' object layer
+        const deathZoneObjects = map.getObjectLayer('Death Zones').objects;
+
+        // Create invisible death zone colliders
+        this.deathZones = this.physics.add.staticGroup();
+
+        deathZoneObjects.forEach((zone) => {
+            const deathZone = this.deathZones.create(zone.x + 16, zone.y + 45, null).setOrigin(0, 0);
+            deathZone.displayWidth = zone.width;
+            deathZone.displayHeight = zone.height;
+            deathZone.body.setSize(zone.width, zone.height); // Set the physics body size to match the display size
+            deathZone.body.debugShowBody = false;
+            deathZone.body.debugShowVelocity = false;
+        });
+
+        // Add overlap detection between the player and death zones
+        this.physics.add.overlap(this.player, this.deathZones, this.handlePlayerDeath, null, this);
+
         EventBus.emit('current-scene-ready', this);
         EventBus.emit('scene-change', 'Game'); // Emit scene change event
 
@@ -253,7 +271,7 @@ export class Game extends Scene {
             frameRate: 10,
             repeat: 0   
         });
-    
+
         // Play the idle animation by default
         this.player.play('idle');
     }
@@ -287,41 +305,46 @@ export class Game extends Scene {
             }
         });
 
-        // Horizontal movement (always enabled)
-        if (this.cursors.left.isDown || this.keys.A.isDown) {
-            this.player.setVelocityX(-speed);
-            this.player.flipX = true; // Face left
-        } else if (this.cursors.right.isDown || this.keys.D.isDown) {
-            this.player.setVelocityX(speed);
-            this.player.flipX = false; // Face right
-        } else if (this.player.body.blocked.down) {
-            this.player.setVelocityX(0);
-        }
-    
-        // Jump and double jump
-        if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keys.W) || Phaser.Input.Keyboard.JustDown(this.cursors.space)) {
-            if (this.player.body.blocked.down) {
-                this.player.setVelocityY(jumpSpeed);
-                this.player.play('jump', true);
-                this.canDoubleJump = true; // Enable double jump after initial jump
-            } else if (this.canDoubleJump) {
-                this.player.setVelocityY(doubleJumpSpeed);
-                this.player.play('jump', true);
-                this.canDoubleJump = false; // Disable double jump after it's used
-            }
-        }
-    
-        // Animation handling
-        if (this.player.body.velocity.y !== 0) {
-            this.player.play('jump', true);
-        } else if (this.player.body.velocity.x !== 0) {
-            this.player.play('run', true);
+        if (this.isPlayerDead) {
+            console.log('Player is dead, input disabled');
+            return;
         } else {
-            this.player.play('idle', true);
-        }
-    
-        if (this.player.body.blocked.down && this.player.anims.currentAnim.key === 'jump') {
-            this.player.play('idle', true);
+            // Horizontal movement (always enabled)
+            if (this.cursors.left.isDown || this.keys.A.isDown) {
+                this.player.setVelocityX(-speed);
+                this.player.flipX = true; // Face left
+            } else if (this.cursors.right.isDown || this.keys.D.isDown) {
+                this.player.setVelocityX(speed);
+                this.player.flipX = false; // Face right
+            } else if (this.player.body.blocked.down) {
+                this.player.setVelocityX(0);
+            }
+        
+            // Jump and double jump
+            if (Phaser.Input.Keyboard.JustDown(this.cursors.up) || Phaser.Input.Keyboard.JustDown(this.keys.W) || Phaser.Input.Keyboard.JustDown(this.cursors.space)) {
+                if (this.player.body.blocked.down) {
+                    this.player.setVelocityY(jumpSpeed);
+                    this.player.play('jump', true);
+                    this.canDoubleJump = true; // Enable double jump after initial jump
+                } else if (this.canDoubleJump) {
+                    this.player.setVelocityY(doubleJumpSpeed);
+                    this.player.play('jump', true);
+                    this.canDoubleJump = false; // Disable double jump after it's used
+                }
+            }
+        
+            // Animation handling
+            if (this.player.body.velocity.y !== 0) {
+                this.player.play('jump', true);
+            } else if (this.player.body.velocity.x !== 0) {
+                this.player.play('run', true);
+            } else {
+                this.player.play('idle', true);
+            }
+        
+            if (this.player.body.blocked.down && this.player.anims.currentAnim.key === 'jump') {
+                this.player.play('idle', true);
+            }
         }
 
         // Toggle hitbox visualization when H key is pressed
@@ -339,6 +362,10 @@ export class Game extends Scene {
             this.resetGame();
         }
     }
+
+    handlePlayerDeath(player, deathZone) {
+        this.handlePlayerDamage(3); // Instantly kill the player
+    }
     
     handlePlayerEnemyCollision(player, enemy) {
         if (player.body.velocity.y > 0 && player.y < enemy.y) {
@@ -347,7 +374,7 @@ export class Game extends Scene {
             player.setVelocityY(-500); // Bounce player upwards
         } else if (!this.isInvulnerable) {
             // Player takes damage
-            this.reduceHealth();
+            this.handlePlayerDamage(1);
             this.triggerInvulnerability();
         }
     }
@@ -464,20 +491,63 @@ export class Game extends Scene {
         }
     }
 
-    reduceHealth() {
-        this.playerHealth -= 1;
+    handlePlayerDamage(amount) {
+        if (this.isPlayerDead) return; // Prevent multiple triggers
+    
+        this.playerHealth -= amount;
+
+        if (this.playerHealth <= 0) {
+
+            console.log('Player died!');
+
+            this.playerHealth = 0;
+            this.isPlayerDead = true; // Flag to indicate the player is dead
+    
+            // Set the player sprite to the death frame
+            this.player.setFrame('death');
+    
+            // Disable player's physics body to prevent further interactions
+            this.player.body.enable = false;
+
+            // Disable player input
+            this.cursors.enabled = false;
+            this.keys.enabled = false;
+    
+            // this.time.delayedCall(3000, () => {
+                this.resetGame();
+            // }, [], this);
+        }
+
         console.log(`Player health: ${this.playerHealth}`);
         EventBus.emit('health-update', this.playerHealth);
-        if (this.playerHealth <= 0) {
-            this.resetGame();
-        }
     }
 
     resetGame() {
-        this.playerHealth = 3; // Reset player health
-        this.collectedItems = []; // Clear collected items array
-        EventBus.emit('collectable-update', this.collectedItems); // Emit collectable update event
+        // Reset player health
+        this.playerHealth = 3;
         EventBus.emit('health-update', this.playerHealth); // Emit health update event
-        this.scene.restart(); // Restart the scene
+    
+        // Clear collected items array
+        this.collectedItems = [];
+        EventBus.emit('collectable-update', this.collectedItems); // Update UI
+    
+        // Reset player position to the starting point
+        this.player.setPosition(this.playerX, this.playerY);
+    
+        // Re-enable player's physics body
+        this.player.body.enable = true;
+    
+        // Re-enable player input
+        this.cursors.enabled = true;
+        this.keys.enabled = true;
+    
+        // Reset death flag
+        this.isPlayerDead = false;
+    
+        // Reset invulnerability flag if used elsewhere
+        this.isInvulnerable = false;
+    
+        // Restart the scene
+        this.scene.restart();
     }
 }
