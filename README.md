@@ -12,6 +12,7 @@
 - Aplicar animações no movimento do player ✅
 - Desenvolver inimigos para o nível ✅(PLACEHOLDER ASSETS)
 - Desenvolver collectables para o nível ✅(PLACEHOLDER ASSETS)
+- Desenvolver timer para o nível ✅
 - Desenvolver funções de interação entre objetos e player (objetivos do nível)
 - Criar condição de vitória para o nível (interagir com X objetos + matar Y inimigos?)
 - Criar mecânica de Game Over

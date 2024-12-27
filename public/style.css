@@ -74,7 +74,7 @@ body {
 .collectable-bar {
     position: absolute;
     top: 15px;
-    left: 50%;
+    left: 92.5%;
     transform: translateX(-50%);
     display: flex;
     gap: 10px;
@@ -91,4 +91,47 @@ body {
     image-rendering: -o-crisp-edges;      /* Opera */
     image-rendering: -webkit-optimize-contrast; /* WebKit */
     -ms-interpolation-mode: nearest-neighbor;   /* IE (non-standard property) */
+}
+
+.interaction-overlay {
+    position: absolute;
+    z-index: 10;
+    transform: translate(-50%, -100%);
+    pointer-events: none; /* Prevent interfering with game input */
+}
+
+.interaction-overlay img {
+    width: 70px; /* Adjust size as needed */
+    height: 70px;
+    pointer-events: auto; /* Allow clicking the button */
+    cursor: pointer;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;    /* Firefox */
+    image-rendering: -o-crisp-edges;      /* Opera */
+    image-rendering: -webkit-optimize-contrast; /* WebKit */
+    -ms-interpolation-mode: nearest-neighbor;   /* IE (non-standard property) */
+}
+
+@font-face {
+    font-family: 'monogram';
+    src: url('/assets/fonts/monogram.ttf') format('truetype');
+    /* Add additional formats if needed:
+    src: url('/assets/fonts/your-font.woff2') format('woff2'),
+         url('/assets/fonts/your-font.woff') format('woff'),
+         url('/assets/fonts/your-font.ttf') format('truetype');
+    */
+}
+
+.timer-display {
+    position: absolute;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 64px;
+    font-family: 'monogram', Arial, sans-serif; /* Add fallback fonts */
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 10;
+    pointer-events: none;
 }

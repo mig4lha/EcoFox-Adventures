@@ -9,6 +9,11 @@ export class Game extends Scene {
         this.canDoubleJump = false; // Track if the player can double jump
         this.isInvulnerable = false; // Player is not invulnerable at the start
         this.hitboxVisible = false; // Hitbox visualization is disabled by default
+        this.enemiesKilled = 0
+        this.score = 0
+        this.levelStartTime = 0;
+        this.levelTime = 0;
+        this.currentInteractable = null; // Track current interactable
     }
 
     preload() {
@@ -222,6 +227,16 @@ export class Game extends Scene {
         // Add overlap detection between the player and death zones
         this.physics.add.overlap(this.player, this.deathZones, this.handlePlayerDeath, null, this);
 
+        // Get interactable center points from object layer
+        const interactableCenters = map.getObjectLayer('Interactables Center').objects;
+        this.interactablePoints = interactableCenters.map(point => ({
+            x: point.x,
+            y: point.y,
+            name: point.name
+        }));
+
+        console.log('Interactable Points:', this.interactablePoints);
+
         EventBus.emit('current-scene-ready', this);
         EventBus.emit('scene-change', 'Game'); // Emit scene change event
 
@@ -274,6 +289,11 @@ export class Game extends Scene {
 
         // Play the idle animation by default
         this.player.play('idle');
+
+        // Start the level timer
+        this.levelStartTime = this.time.now;
+        
+        this.debugGraphics = this.add.graphics();
     }
 
     update() {
@@ -345,6 +365,43 @@ export class Game extends Scene {
             if (this.player.body.blocked.down && this.player.anims.currentAnim.key === 'jump') {
                 this.player.play('idle', true);
             }
+
+            let nearObject = false;
+
+            this.interactablePoints.forEach(point => {
+                const distance = Phaser.Math.Distance.Between(
+                    this.player.x,
+                    this.player.y,
+                    point.x,
+                    point.y
+                );
+        
+                const proximityThreshold = 64; // One tile distance
+                if (distance < proximityThreshold) {
+                    nearObject = true;
+        
+                    const camera = this.cameras.main;
+                    const screenX = point.x - camera.scrollX + 80;
+                    const screenY = point.y - camera.scrollY + 50;
+        
+                    EventBus.emit('show-interaction', { x: screenX, y: screenY });
+                }
+        
+                // Debug visualization if needed
+                // if (this.debugGraphics) {
+                //     this.debugGraphics.lineStyle(2, 0x0000ff);
+                //     this.debugGraphics.fillCircle(point.x, point.y, 3);
+                //     this.debugGraphics.lineStyle(2, 0x00ff00);
+                //     this.debugGraphics.strokeCircle(point.x, point.y, proximityThreshold);
+                // }
+            });
+        
+            if (!nearObject) {
+                EventBus.emit('hide-interaction');
+            }
+
+            this.levelTime = Math.floor((this.time.now - this.levelStartTime) / 1000);
+            EventBus.emit('time-update', this.levelTime);
         }
 
         // Toggle hitbox visualization when H key is pressed
@@ -361,6 +418,14 @@ export class Game extends Scene {
         if (this.player.y > this.physics.world.bounds.height || this.player.y < 0 || this.player.x < 0 || this.player.x > this.physics.world.bounds.width) {
             this.resetGame();
         }
+    }
+
+    // Add this to track completion time when level ends
+    finishLevel() {
+        const finalTime = this.levelTime;
+        console.log(`Level completed in: ${this.formatTime(finalTime)}`);
+        // Emit event with final time
+        EventBus.emit('level-complete', { time: finalTime });
     }
 
     handlePlayerDeath(player, deathZone) {
@@ -397,6 +462,9 @@ export class Game extends Scene {
             enemy.body.setImmovable(true);
             enemy.body.moves = false;
             enemy.body.enable = false; // Disable the physics body
+
+            this.enemiesKilled += 1
+            this.incrementScore(100)
     
             // Set a timer to destroy the enemy after 3 seconds
             this.time.delayedCall(3000, () => {
@@ -405,6 +473,11 @@ export class Game extends Scene {
         } else {
             // Optional: Visual feedback for enemy hurt
         }
+    }
+
+    incrementScore(amount) {
+        this.score += amount;
+        console.log(`Score: ${this.score}`);
     }
 
     toggleHitboxVisualization() {
@@ -470,6 +543,8 @@ export class Game extends Scene {
         this.collectedItems.push(collectable.name);
     
         console.log(`Collected items: ${this.collectedItems}`);
+
+        this.incrementScore(500);
     
         // Disable the collectable
         collectable.destroy();
@@ -503,15 +578,15 @@ export class Game extends Scene {
             this.playerHealth = 0;
             this.isPlayerDead = true; // Flag to indicate the player is dead
     
-            // Set the player sprite to the death frame
-            this.player.setFrame('death');
+            // // Set the player sprite to the death frame
+            // this.player.setFrame('death');
     
-            // Disable player's physics body to prevent further interactions
-            this.player.body.enable = false;
+            // // Disable player's physics body to prevent further interactions
+            // this.player.body.enable = false;
 
-            // Disable player input
-            this.cursors.enabled = false;
-            this.keys.enabled = false;
+            // // Disable player input
+            // this.cursors.enabled = false;
+            // this.keys.enabled = false;
     
             // this.time.delayedCall(3000, () => {
                 this.resetGame();

@@ -2,6 +2,8 @@ import { useRef, useState, useEffect } from 'react';
 import { PhaserGame } from './game/PhaserGame';
 import HealthBar from './components/HealthBar';
 import CollectableBar from './components/CollectableBar';
+import InteractionOverlay from './components/InteractionOverlay';
+import TimerDisplay from './components/TimerDisplay';
 import { EventBus } from './game/EventBus';
 
 function App() {
@@ -24,13 +26,17 @@ function App() {
         <div id="app">
             <div id="game-container">
                 <PhaserGame ref={phaserRef} />
-                {(currentScene === 'Game' || currentScene === 'DebugGame') && <HealthBar />}
                 {(currentScene === 'Game' || currentScene === 'DebugGame') && (
-                    <CollectableBar
-                        collectableAsset="/assets/collectables/moedinha_gray.png"
-                        collectedAsset="/assets/collectables/moedinha.png"
-                    />
+                    <>
+                        <HealthBar />
+                        <TimerDisplay />
+                        <CollectableBar
+                            collectableAsset="/assets/collectables/moedinha_gray.png"
+                            collectedAsset="/assets/collectables/moedinha.png"
+                        />
+                    </>
                 )}
+                <InteractionOverlay />
             </div>
         </div>
     );
