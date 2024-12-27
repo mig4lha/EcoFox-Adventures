@@ -366,7 +366,7 @@
                 {
                  "height":32,
                  "id":17,
-                 "name":"interactable_1",
+                 "name":"interactable_end",
                  "rotation":0,
                  "type":"",
                  "visible":true,
@@ -547,8 +547,8 @@
                  "type":"",
                  "visible":true,
                  "width":32,
-                 "x":5664,
-                 "y":512
+                 "x":160,
+                 "y":672
                 }],
          "opacity":1,
          "type":"objectgroup",

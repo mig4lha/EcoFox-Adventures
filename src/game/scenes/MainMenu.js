@@ -78,7 +78,6 @@ export class MainMenu extends Scene {
             this.playButton.on('pointerdown', (pointer) => {
                 if (pointer.event.shiftKey) {
                     // Shift + Left Click action
-                    console.log('Shift + Left Click on Play Button');
                     this.playButton.play(playButtonAnim);
                     this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
                         // Game debug map
@@ -86,7 +85,6 @@ export class MainMenu extends Scene {
                     });
                 } else {
                     // Regular Left Click action
-                    console.log('Left Click on Play Button');
                     this.playButton.play(playButtonAnim);
                     this.cameras.main.fadeOut(1000, 0, 0, 0, () => {
                         this.scene.start('Game');

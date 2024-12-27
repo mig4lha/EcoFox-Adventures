@@ -9,11 +9,11 @@ export class Game extends Scene {
         this.canDoubleJump = false; // Track if the player can double jump
         this.isInvulnerable = false; // Player is not invulnerable at the start
         this.hitboxVisible = false; // Hitbox visualization is disabled by default
-        this.enemiesKilled = 0
+        this.enemiesKilled = 0 // Track enemies killed
+        this.collectablesCollected = 0; // Track collectables collected
         this.score = 0
         this.levelStartTime = 0;
         this.levelTime = 0;
-        this.currentInteractable = null; // Track current interactable
     }
 
     preload() {
@@ -42,6 +42,10 @@ export class Game extends Scene {
 
     create() {
         this.cameras.main.setBackgroundColor(GAME_SETTINGS.backgroundColor);
+
+        this.enemiesKilled = 0 // Track enemies killed
+        this.collectablesCollected = 0; // Track collectables collected
+        this.score = 0
 
         this.isInvulnerable = false; // Player is not invulnerable at the start
 
@@ -235,14 +239,16 @@ export class Game extends Scene {
             name: point.name
         }));
 
-        console.log('Interactable Points:', this.interactablePoints);
+        // console.log('Interactable Points:', this.interactablePoints);
 
         EventBus.emit('current-scene-ready', this);
         EventBus.emit('scene-change', 'Game'); // Emit scene change event
 
         // Set up input handling
         this.cursors = this.input.keyboard.createCursorKeys();
-        this.keys = this.input.keyboard.addKeys('W,A,S,D,H,R');
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,H,R,E');
+
+        this.interactionKey = this.keys.E;
 
         this.anims.create({
             key: 'idle',
@@ -367,6 +373,7 @@ export class Game extends Scene {
             }
 
             let nearObject = false;
+            let interactable = null;
 
             this.interactablePoints.forEach(point => {
                 const distance = Phaser.Math.Distance.Between(
@@ -379,6 +386,8 @@ export class Game extends Scene {
                 const proximityThreshold = 64; // One tile distance
                 if (distance < proximityThreshold) {
                     nearObject = true;
+
+                    interactable = point;
         
                     const camera = this.cameras.main;
                     const screenX = point.x - camera.scrollX + 80;
@@ -387,13 +396,10 @@ export class Game extends Scene {
                     EventBus.emit('show-interaction', { x: screenX, y: screenY });
                 }
         
-                // Debug visualization if needed
-                // if (this.debugGraphics) {
-                //     this.debugGraphics.lineStyle(2, 0x0000ff);
-                //     this.debugGraphics.fillCircle(point.x, point.y, 3);
-                //     this.debugGraphics.lineStyle(2, 0x00ff00);
-                //     this.debugGraphics.strokeCircle(point.x, point.y, proximityThreshold);
-                // }
+                 // Handle E key press for interaction
+                if (Phaser.Input.Keyboard.JustDown(this.interactionKey) && interactable) {
+                    this.handleInteraction(interactable);
+                }
             });
         
             if (!nearObject) {
@@ -420,12 +426,45 @@ export class Game extends Scene {
         }
     }
 
+    handleInteraction(interactable) {
+        if (interactable.name === 'interactable_end') {
+            this.finishLevel();
+        }
+        // Add more interaction cases if needed
+        else {
+            console.log(`Interacted with: ${interactable.name}`);
+            // Handle other interactions
+        }
+    }
+
     // Add this to track completion time when level ends
-    finishLevel() {
-        const finalTime = this.levelTime;
-        console.log(`Level completed in: ${this.formatTime(finalTime)}`);
-        // Emit event with final time
-        EventBus.emit('level-complete', { time: finalTime });
+    finishLevel() {        
+        // First emit scene change to trigger React fade
+        EventBus.emit('scene-change', 'ScoreScene');
+
+        setTimeout(() => {
+            this.cameras.main.fade(1500, 0, 0, 0);
+
+            const finalTime = this.levelTime;
+            
+            this.cameras.main.once('camerafadeoutcomplete', () => {
+                this.scene.start('ScoreScene', {
+                    timeTaken: finalTime,
+                    collectables: this.collectablesCollected,
+                    enemiesKilled: this.enemiesKilled,
+                    totalScore: this.calculateScore(this.score, finalTime)
+                });
+            });
+        }, 100);
+    }
+
+    calculateScore(score, time) {
+        // Calculate score based on time and score achieved during level
+        const maxTime = 120; // Maximum time in seconds for full bonus
+        const bonusMultiplier = 20; // Points per second saved
+
+        const timeBonus = Math.max(0, maxTime - time) * bonusMultiplier;
+        return score + timeBonus;
     }
 
     handlePlayerDeath(player, deathZone) {
@@ -551,6 +590,8 @@ export class Game extends Scene {
     
         // Emit collectable update event
         EventBus.emit('collectable-update', this.collectedItems);
+
+        this.collectablesCollected += 1;
     
         // Optionally, play a sound or animation
         // this.sound.play('collectSound');
@@ -605,6 +646,10 @@ export class Game extends Scene {
         // Clear collected items array
         this.collectedItems = [];
         EventBus.emit('collectable-update', this.collectedItems); // Update UI
+
+        this.collectablesCollected = 0;
+        this.score = 0;
+        this.enemiesKilled = 0;
     
         // Reset player position to the starting point
         this.player.setPosition(this.playerX, this.playerY);
