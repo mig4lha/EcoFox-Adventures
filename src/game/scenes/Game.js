@@ -23,21 +23,27 @@ export class Game extends Scene {
         // Load the assets for the game scene
         this.load.setPath('assets');
 
-        this.load.image('props', 'tiles/props.png');
-        this.load.image('tileset', 'tiles/tileset.png');
-        this.load.image('background_layer_1', 'backgrounds/background_layer_1_extended_2.png');
-        this.load.image('background_layer_2', 'backgrounds/background_layer_2_extended_2.png');
-        this.load.image('background_layer_3', 'backgrounds/background_layer_3_extended_2.png');
+        const totalLevels = 2; // Define the total number of levels
+        for (let i = 1; i <= totalLevels; i++) {
+            this.load.tilemapTiledJSON(`level${i}`, `levels/level${i}.json`);
 
-        this.load.tilemapTiledJSON('level1', 'levels/level1.json');
+            this.load.image('props', 'tiles/props.png');
+            this.load.image('tileset', 'tiles/tileset.png');
+
+            if(i === 1) {
+                this.load.image('background_layer_1', 'backgrounds/background_layer_1_extended_2.png');
+                this.load.image('background_layer_2', 'backgrounds/background_layer_2_extended_2.png');
+                this.load.image('background_layer_3', 'backgrounds/background_layer_3_extended_2.png');
+
+                this.load.image('enemy1', 'enemies/bichinho.png');
+                this.load.audio('enemyDeathSound1', 'audio/bichinho_morto.mp3');
+                this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
+
+                this.load.image('collectable', 'collectables/moedinha.png');
+            }
+        }
 
         this.load.atlas('player', 'characters/fox_spritesheet.png', 'characters/fox_spritesheet.json');
-
-        this.load.image('enemy1', 'enemies/bichinho.png');
-        this.load.audio('enemyDeathSound1', 'audio/bichinho_morto.mp3');
-        this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
-
-        this.load.image('collectable', 'collectables/moedinha.png');
     }
 
     create() {
@@ -76,7 +82,10 @@ export class Game extends Scene {
         this.props3Layer = map.createLayer('Props_2', props, 0, 0);
         this.props4Layer = map.createLayer('Props', props, 0, 0);
         
-        this.interactables = map.createLayer('Interactables', props, 0, 0);
+        this.interactables = map.createLayer('Interactables_Initial', props, 0, 0);
+        this.interactables_final = map.createLayer('Interactables_Final', props, 0, 0);
+
+        this.interactables_final.setVisible(false);
 
         this.playerX = map.getObjectLayer('Player Spawn').objects[0].x;
         this.playerY = map.getObjectLayer('Player Spawn').objects[0].y;
@@ -246,7 +255,7 @@ export class Game extends Scene {
 
         // Set up input handling
         this.cursors = this.input.keyboard.createCursorKeys();
-        this.keys = this.input.keyboard.addKeys('W,A,S,D,H,R,E');
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,H,R,E,O,I');
 
         this.interactionKey = this.keys.E;
 
@@ -300,6 +309,25 @@ export class Game extends Scene {
         this.levelStartTime = this.time.now;
         
         this.debugGraphics = this.add.graphics();
+
+        this.input.keyboard.on('keydown-O', () => {
+            this.fadeOutUI();
+        });
+
+        // Example: Trigger fade-in without changing scenes
+        this.input.keyboard.on('keydown-I', () => {
+            this.fadeInUI();
+        });
+    }
+
+    fadeOutUI() {
+        // Emit 'fade-out' event
+        EventBus.emit('fade-out');
+    }
+
+    fadeInUI() {
+        // Emit 'fade-in' event
+        EventBus.emit('fade-in');
     }
 
     update() {
@@ -439,23 +467,50 @@ export class Game extends Scene {
 
     // Add this to track completion time when level ends
     finishLevel() {        
-        // First emit scene change to trigger React fade
-        EventBus.emit('scene-change', 'ScoreScene');
+        // Start fade-out effect over 1000ms (1 second)
+        this.cameras.main.fadeOut(2000, 0, 0, 0);
 
-        setTimeout(() => {
-            this.cameras.main.fade(1500, 0, 0, 0);
+        // Emit event to trigger React components to fade out
+        this.fadeOutUI();
+    
+        // Listen for the fade-out completion once
+        this.cameras.main.once('camerafadeoutcomplete', () => {
+            // Swap layer visibilities
+            this.interactables.setVisible(false);
+            this.interactables_final.setVisible(true);
+    
+            // Start fade-in effect over 1000ms (1 second)
+            this.cameras.main.fadeIn(2000, 0, 0, 0);
 
-            const finalTime = this.levelTime;
-            
-            this.cameras.main.once('camerafadeoutcomplete', () => {
-                this.scene.start('ScoreScene', {
-                    timeTaken: finalTime,
-                    collectables: this.collectablesCollected,
-                    enemiesKilled: this.enemiesKilled,
-                    totalScore: this.calculateScore(this.score, finalTime)
-                });
-            });
-        }, 100);
+            // Make the player jump twice with a 1-second interval
+            this.time.delayedCall(1500, () => {
+                this.player.setVelocityY(-500);
+                this.time.delayedCall(1000, () => {
+                    this.player.setVelocityY(-500);
+                }, [], this);
+            }, [], this);
+    
+            // Delay the event emission and scene transition by 1000ms (1 second)
+            this.time.delayedCall(4500, () => {
+                // Emit scene change event to trigger React fade (if applicable)
+                EventBus.emit('scene-change', 'ScoreScene');
+    
+                // Optional: Start another fade effect before transitioning to ScoreScene
+                this.cameras.main.fadeOut(1500, 0, 0, 0);
+    
+                const finalTime = this.levelTime;
+    
+                // Listen once for the new fade-out completion to proceed to ScoreScene
+                this.cameras.main.once('camerafadeoutcomplete', () => {
+                    this.scene.start('ScoreScene', {
+                        timeTaken: finalTime,
+                        collectables: this.collectablesCollected,
+                        enemiesKilled: this.enemiesKilled,
+                        totalScore: this.calculateScore(this.score, finalTime)
+                    });
+                }, this);
+            }, [], this);
+        }, this);
     }
 
     calculateScore(score, time) {

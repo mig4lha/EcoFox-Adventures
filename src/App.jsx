@@ -9,29 +9,44 @@ import { EventBus } from './game/EventBus';
 function App() {
     const phaserRef = useRef();
     const [currentScene, setCurrentScene] = useState(null);
-    const [isFading, setIsFading] = useState(false);
+    const [fadeState, setFadeState] = useState('fade-in'); // 'fade-in' or 'fade-out'
     const isGameScene = currentScene === 'Game' || currentScene === 'DebugGame';
 
     useEffect(() => {
         const handleSceneChange = (scene) => {
             if (scene !== 'Game' && scene !== 'DebugGame') {
-                setIsFading(true);
+                setFadeState('fade-out');
             } else {
-                setIsFading(false);
+                setFadeState('fade-in');
             }
             setCurrentScene(scene);
         };
 
+        const handleFadeIn = () => {
+            setFadeState('fade-in');
+        };
+
+        const handleFadeOut = () => {
+            setFadeState('fade-out');
+        };
+
+        EventBus.on('fade-in', handleFadeIn);
+        EventBus.on('fade-out', handleFadeOut);
         EventBus.on('scene-change', handleSceneChange);
-        return () => EventBus.off('scene-change', handleSceneChange);
+
+        return () => {
+            EventBus.off('scene-change', handleSceneChange);
+            EventBus.off('fade-out', handleFadeOut);
+            EventBus.off('fade-in', handleFadeIn);
+        };
     }, []);
 
     return (
         <div id="app">
             <div id="game-container">
                 <PhaserGame ref={phaserRef} />
-                {(isGameScene || isFading) && (
-                    <div className={`ui-components ${isFading ? 'fade-out' : ''}`}>
+                {(isGameScene || fadeState === 'fade-out') && (
+                    <div className={`ui-components ${fadeState}`}>
                         <HealthBar />
                         <TimerDisplay />
                         <CollectableBar

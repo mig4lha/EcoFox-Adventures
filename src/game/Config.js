@@ -11,5 +11,6 @@ export const GAME_SETTINGS = {
     tileHeight: 32,
     tileMargin: 1,
     tileSpacing: 2,
-    backgroundColor: '#000000'
+    backgroundColor: '#000000',
+    currentLevel: 1,
 };
