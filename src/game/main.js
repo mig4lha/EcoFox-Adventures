@@ -1,7 +1,7 @@
 import { Boot } from './scenes/Boot';
 import { Game } from './scenes/Game';
 import { DebugGame } from './scenes/DebugGame';
-import { GameOver } from './scenes/GameOver';
+import { EndGame } from './scenes/EndGame';
 import { MainMenu } from './scenes/MainMenu';
 import Phaser from 'phaser';
 import { Preloader } from './scenes/Preloader';
@@ -24,7 +24,7 @@ const config = {
         DebugGame,
         Game,
         ScoreScene,
-        GameOver
+        EndGame,
     ],
     physics: {
         default: 'arcade',

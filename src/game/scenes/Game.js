@@ -14,6 +14,9 @@ export class Game extends Scene {
         this.score = 0
         this.levelStartTime = 0;
         this.levelTime = 0;
+        this.map = null;
+        this.tileset = null;
+        this.props = null;
     }
 
     preload() {
@@ -23,25 +26,24 @@ export class Game extends Scene {
         // Load the assets for the game scene
         this.load.setPath('assets');
 
-        const totalLevels = 2; // Define the total number of levels
-        for (let i = 1; i <= totalLevels; i++) {
-            this.load.tilemapTiledJSON(`level${i}`, `levels/level${i}.json`);
+        // for (let i = 1; i <= GAME_SETTINGS.totalLevels; i++) {
 
-            this.load.image('props', 'tiles/props.png');
-            this.load.image('tileset', 'tiles/tileset.png');
+        this.load.image(`props`, `tiles/props.png`);
+        this.load.image(`tileset`, `tiles/tileset.png`);
 
-            if(i === 1) {
-                this.load.image('background_layer_1', 'backgrounds/background_layer_1_extended_2.png');
-                this.load.image('background_layer_2', 'backgrounds/background_layer_2_extended_2.png');
-                this.load.image('background_layer_3', 'backgrounds/background_layer_3_extended_2.png');
+        this.load.tilemapTiledJSON(`level1`, `levels/level1.json`);
+        this.load.tilemapTiledJSON(`level2`, `levels/level2.json`);
 
-                this.load.image('enemy1', 'enemies/bichinho.png');
-                this.load.audio('enemyDeathSound1', 'audio/bichinho_morto.mp3');
-                this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
+        this.load.image('background_layer_1', 'backgrounds/background_layer_1_extended_2.png');
+        this.load.image('background_layer_2', 'backgrounds/background_layer_2_extended_2.png');
+        this.load.image('background_layer_3', 'backgrounds/background_layer_3_extended_2.png');
 
-                this.load.image('collectable', 'collectables/moedinha.png');
-            }
-        }
+        this.load.image('enemy1', 'enemies/bichinho.png');
+        this.load.audio('enemyDeathSound1', 'audio/bichinho_morto.mp3');
+        this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
+
+        this.load.image('collectable', 'collectables/moedinha.png');
+
 
         this.load.atlas('player', 'characters/fox_spritesheet.png', 'characters/fox_spritesheet.json');
     }
@@ -55,40 +57,26 @@ export class Game extends Scene {
 
         this.isInvulnerable = false; // Player is not invulnerable at the start
 
+        // Create a group for enemies
         this.enemies = this.physics.add.group();
+
+        // Create a group for collectables
+        this.collectables = this.physics.add.group();
+
+        // Create a group for death zones
+        this.deathZones = this.physics.add.staticGroup();
+
+        // Variable to track collected items
+        this.collectedItems = [];
 
         this.initialCameraX = this.cameras.main.scrollX;
         this.initialCameraY = this.cameras.main.scrollY;
         
-        const map = this.make.tilemap({ key: 'level1' });
-        const tileset = map.addTilesetImage('tileset', 'tileset', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
-        const props = map.addTilesetImage('props', 'props', GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
-        
-        // Add background images
-        this.backgroundLayer1 = this.add.image(0, 0, 'background_layer_1')
-            .setOrigin(0, 0); 
-        this.backgroundLayer2 = this.add.image(0, 0, 'background_layer_2')
-            .setOrigin(0, 0);
-        this.backgroundLayer3 = this.add.image(0, 0, 'background_layer_3')
-            .setOrigin(0, 0);
+        // Load the current level
+        this.loadLevel(GAME_SETTINGS.currentLevel);
 
-        this.backgroundCaveLayer = map.createLayer('Background', tileset, 0, 0);
-        this.terrainLayer = map.createLayer('Terrain', tileset, 0, 0);
-        this.terrainPropsLayer = map.createLayer('Terrain_props', props, 0, 0);
-        this.platformsLayer = map.createLayer('Platforms', tileset, 0, 0);
-
-        this.propsLayer = map.createLayer('Props_4', props, 0, 0);
-        this.props2Layer = map.createLayer('Props_3', props, 0, 0);
-        this.props3Layer = map.createLayer('Props_2', props, 0, 0);
-        this.props4Layer = map.createLayer('Props', props, 0, 0);
-        
-        this.interactables = map.createLayer('Interactables_Initial', props, 0, 0);
-        this.interactables_final = map.createLayer('Interactables_Final', props, 0, 0);
-
-        this.interactables_final.setVisible(false);
-
-        this.playerX = map.getObjectLayer('Player Spawn').objects[0].x;
-        this.playerY = map.getObjectLayer('Player Spawn').objects[0].y;
+        this.playerX = this.map.getObjectLayer('Player Spawn').objects[0].x;
+        this.playerY = this.map.getObjectLayer('Player Spawn').objects[0].y;
 
         this.player = this.physics.add.sprite(this.playerX, this.playerY, 'player', 'idle_0');
         this.player.setCollideWorldBounds(true);
@@ -99,17 +87,13 @@ export class Game extends Scene {
         // Set a circular hitbox for the player sprite
         this.player.body.setCircle(6, 10, 4); // Radius of the circle, x offset, y offset (adjust as needed)
 
-        this.terrainLayer.setCollisionByProperty({ collides: true });
-        this.terrainPropsLayer.setCollisionByProperty({ collides: true });
-        this.platformsLayer.setCollisionByProperty({ collides: true });
-
         this.physics.add.collider(this.player, this.terrainLayer);
         this.physics.add.collider(this.player, this.terrainPropsLayer);
         this.physics.add.collider(this.player, this.platformsLayer);
 
         // Set the camera and world bounds to match the map size
-        this.cameras.main.setBounds(5, 0, map.widthInPixels - 10, map.heightInPixels);
-        this.physics.world.setBounds(5, 0, map.widthInPixels - 10, map.heightInPixels);
+        this.cameras.main.setBounds(5, 0, this.map.widthInPixels - 10, this.map.heightInPixels);
+        this.physics.world.setBounds(5, 0, this.map.widthInPixels - 10, this.map.heightInPixels);
 
         // Ensure player is properly constrained within the world bounds
         this.player.setCollideWorldBounds(true);
@@ -117,12 +101,11 @@ export class Game extends Scene {
         this.player.body.debugShowBody = false;
         this.player.body.debugShowVelocity = false;
 
-        // Debugging visualization
-        // this.terrainLayer.renderDebug(this.add.graphics(), {
-        //     tileColor: null,
-        //     collidingTileColor: new Phaser.Display.Color(243, 134, 48, 255),
-        //     faceColor: new Phaser.Display.Color(40, 39, 37, 255)
-        // });
+        // Add enemies, collectables, death zones, interactables
+        this.addEnemies(this.map);
+        this.addCollectables(this.map);
+        this.addDeathZones(this.map);
+        this.addInteractables(this.map);
 
         // Set the camera to follow the player
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1);
@@ -135,120 +118,6 @@ export class Game extends Scene {
 
         // Fade in the scene
         this.cameras.main.fadeIn(GAME_SETTINGS.cameraFadeInDuration);
-        
-        const enemyObjects = map.getObjectLayer('Enemy Spawn').objects;
-        enemyObjects.forEach((enemyObject) => {
-            // if (enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
-                // Get the enemy's original width from the texture
-                const enemyTexture = this.textures.get('enemy1');
-                const enemyFrame = enemyTexture.get();
-        
-                const originalEnemyWidth = enemyFrame.width;
-                const enemyScale = 0.10;
-        
-                // Calculate the enemy's display width after scaling
-                const enemyDisplayWidth = originalEnemyWidth * enemyScale;
-        
-                // Number of enemies to spawn
-                var numEnemies = 1;
-
-                if(enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
-                    numEnemies = 2;
-                }
-
-                const patrolAreaWidth = enemyObject.width / numEnemies;
-        
-                // Loop to create multiple enemies
-                for (let i = 0; i < numEnemies; i++) {
-
-                    // Calculate the patrol area's start X coordinate
-                    const patrolStartX = enemyObject.x + i * patrolAreaWidth;
-        
-                    // Center the enemy within its patrol area
-                    const enemyX = patrolStartX + (patrolAreaWidth - enemyDisplayWidth) / 2;
-        
-                    // Create the enemy at the calculated position
-                    const enemy = this.enemies.create(enemyX, enemyObject.y, 'enemy1');
-                    enemy.setScale(enemyScale);
-                    enemy.setCollideWorldBounds(true);
-            
-                    enemy.body.debugShowBody = false;
-                    enemy.body.debugShowVelocity = false;
-
-                    // Assign hit points to the enemy
-                    enemy.hitPoints = 1; // Set the number of hits required to defeat the enemy
-        
-                    // Set initial movement properties
-                    enemy.setVelocityX(50); // Adjust speed as needed
-                    enemy.patrolDirection = 1; // 1 for right, -1 for left
-        
-                    // Set movement boundaries for the enemy
-                    enemy.minX = patrolStartX + 32;
-                    enemy.maxX = patrolStartX + patrolAreaWidth - enemyDisplayWidth + 32;
-                }
-            // }
-        });
-
-        // Collide enemies with terrain
-        this.physics.add.collider(this.enemies, this.terrainLayer);
-
-        // Detect collision between player and enemies
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
-
-        // Variable to track collected items
-        this.collectedItems = [];
-
-        // Create a group for collectables
-        this.collectables = this.physics.add.group();
-
-        // Retrieve collectable objects from the 'Collectables' object layer
-        const collectableObjects = map.getObjectLayer('Collectables').objects;
-
-        collectableObjects.forEach((collectableObject) => {
-            // Create a collectable at the specified position
-            const collectable = this.collectables.create(collectableObject.x, collectableObject.y, 'collectable');
-            collectable.setOrigin(0.5, 0.5); // Use default origin
-            collectable.name = collectableObject.name; // e.g., 'collectable_1'
-            collectable.body.setAllowGravity(false); // Collectables don't need gravity
-            collectable.setImmovable(true);
-        
-            collectable.body.debugShowBody = false;
-            collectable.body.debugShowVelocity = false;
-        
-            collectable.setScale(0.015);
-            collectable.y += 5; 
-        });
-
-        // Add overlap between the player and collectables
-        this.physics.add.overlap(this.player, this.collectables, this.collectItem, null, this);
-
-        // Retrieve death zone objects from the 'Death Zones' object layer
-        const deathZoneObjects = map.getObjectLayer('Death Zones').objects;
-
-        // Create invisible death zone colliders
-        this.deathZones = this.physics.add.staticGroup();
-
-        deathZoneObjects.forEach((zone) => {
-            const deathZone = this.deathZones.create(zone.x + 16, zone.y + 45, null).setOrigin(0, 0);
-            deathZone.displayWidth = zone.width;
-            deathZone.displayHeight = zone.height;
-            deathZone.body.setSize(zone.width, zone.height); // Set the physics body size to match the display size
-            deathZone.body.debugShowBody = false;
-            deathZone.body.debugShowVelocity = false;
-        });
-
-        // Add overlap detection between the player and death zones
-        this.physics.add.overlap(this.player, this.deathZones, this.handlePlayerDeath, null, this);
-
-        // Get interactable center points from object layer
-        const interactableCenters = map.getObjectLayer('Interactables Center').objects;
-        this.interactablePoints = interactableCenters.map(point => ({
-            x: point.x,
-            y: point.y,
-            name: point.name
-        }));
-
-        // console.log('Interactable Points:', this.interactablePoints);
 
         EventBus.emit('current-scene-ready', this);
         EventBus.emit('scene-change', 'Game'); // Emit scene change event
@@ -310,14 +179,174 @@ export class Game extends Scene {
         
         this.debugGraphics = this.add.graphics();
 
-        this.input.keyboard.on('keydown-O', () => {
-            this.fadeOutUI();
+        // this.input.keyboard.on('keydown-O', () => {
+        //     this.fadeOutUI();
+        // });
+
+        // // Example: Trigger fade-in without changing scenes
+        // this.input.keyboard.on('keydown-I', () => {
+        //     this.fadeInUI();
+        // });
+    }
+
+    loadLevel(levelNumber) {
+        // Clear existing groups (enemies, collectables, etc.) if necessary
+        this.enemies.clear(true, true);
+        this.collectables.clear(true, true);
+        this.deathZones.clear(true, true);
+        this.interactablePoints = [];
+
+        this.map = this.make.tilemap({ key: `level${levelNumber}` });
+        this.tileset = this.map.addTilesetImage(`tileset`, `tileset`, GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
+        this.props = this.map.addTilesetImage(`props`, `props`, GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
+        // this.tileset = this.map.addTilesetImage(`tileset${levelNumber}`, `tileset${levelNumber}`, GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
+        // this.props = this.map.addTilesetImage(`props${levelNumber}`, `props${levelNumber}`, GAME_SETTINGS.tileWidth, GAME_SETTINGS.tileHeight);
+        
+        // Add background images
+        this.backgroundLayer1 = this.add.image(0, 0, 'background_layer_1')
+        .setOrigin(0, 0); 
+        this.backgroundLayer2 = this.add.image(0, 0, 'background_layer_2')
+        .setOrigin(0, 0);
+        this.backgroundLayer3 = this.add.image(0, 0, 'background_layer_3')
+        .setOrigin(0, 0);
+
+        this.backgroundCaveLayer = this.map.createLayer('Background', this.tileset, 0, 0);
+        this.terrainLayer = this.map.createLayer('Terrain', this.tileset, 0, 0);
+        this.terrainPropsLayer = this.map.createLayer('Terrain_props', this.props, 0, 0);
+        this.platformsLayer = this.map.createLayer('Platforms', this.tileset, 0, 0);
+
+        this.propsLayer = this.map.createLayer('Props_4', this.props, 0, 0);
+        this.props2Layer = this.map.createLayer('Props_3', this.props, 0, 0);
+        this.props3Layer = this.map.createLayer('Props_2', this.props, 0, 0);
+        this.props4Layer = this.map.createLayer('Props', this.props, 0, 0);
+
+        this.interactables = this.map.createLayer('Interactables_Initial', this.props, 0, 0);
+        this.interactables_final = this.map.createLayer('Interactables_Final', this.props, 0, 0);
+
+        this.interactables_final.setVisible(false);
+
+        this.terrainLayer.setCollisionByProperty({ collides: true });
+        this.terrainPropsLayer.setCollisionByProperty({ collides: true });
+        this.platformsLayer.setCollisionByProperty({ collides: true });
+
+    }
+
+    addEnemies(map) {
+        const enemySpawnLayer = map.getObjectLayer('Enemy Spawn');
+        const enemyObjects = enemySpawnLayer ? enemySpawnLayer.objects : [];
+        enemyObjects.forEach((enemyObject) => {
+            // if (enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
+                // Get the enemy's original width from the texture
+                const enemyTexture = this.textures.get('enemy1');
+                const enemyFrame = enemyTexture.get();
+        
+                const originalEnemyWidth = enemyFrame.width;
+                const enemyScale = 0.10;
+        
+                // Calculate the enemy's display width after scaling
+                const enemyDisplayWidth = originalEnemyWidth * enemyScale;
+        
+                // Number of enemies to spawn
+                var numEnemies = 1;
+
+                if(enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
+                    numEnemies = 2;
+                }
+
+                const patrolAreaWidth = enemyObject.width / numEnemies;
+        
+                // Loop to create multiple enemies
+                for (let i = 0; i < numEnemies; i++) {
+
+                    // Calculate the patrol area's start X coordinate
+                    const patrolStartX = enemyObject.x + i * patrolAreaWidth;
+        
+                    // Center the enemy within its patrol area
+                    const enemyX = patrolStartX + (patrolAreaWidth - enemyDisplayWidth) / 2;
+        
+                    // Create the enemy at the calculated position
+                    const enemy = this.enemies.create(enemyX, enemyObject.y, 'enemy1');
+                    enemy.setScale(enemyScale);
+                    enemy.setCollideWorldBounds(true);
+            
+                    enemy.body.debugShowBody = false;
+                    enemy.body.debugShowVelocity = false;
+
+                    // Assign hit points to the enemy
+                    enemy.hitPoints = 1; // Set the number of hits required to defeat the enemy
+        
+                    // Set initial movement properties
+                    enemy.setVelocityX(50); // Adjust speed as needed
+                    enemy.patrolDirection = 1; // 1 for right, -1 for left
+        
+                    // Set movement boundaries for the enemy
+                    enemy.minX = patrolStartX + 32;
+                    enemy.maxX = patrolStartX + patrolAreaWidth - enemyDisplayWidth + 32;
+                }
+            // }
         });
 
-        // Example: Trigger fade-in without changing scenes
-        this.input.keyboard.on('keydown-I', () => {
-            this.fadeInUI();
+        // Collide enemies with terrain
+        this.physics.add.collider(this.enemies, this.terrainLayer);
+
+        // Detect collision between player and enemies
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+    }
+
+    addCollectables(map) {
+        // Retrieve collectable objects from the 'Collectables' object layer
+        const collectableLayer = map.getObjectLayer('Collectables');
+        const collectableObjects = collectableLayer ? collectableLayer.objects : [];
+        
+        collectableObjects.forEach((collectableObject) => {
+            // Create a collectable at the specified position
+            const collectable = this.collectables.create(collectableObject.x, collectableObject.y, 'collectable');
+            collectable.setOrigin(0.5, 0.5); // Use default origin
+            collectable.name = collectableObject.name; // e.g., 'collectable_1'
+            collectable.body.setAllowGravity(false); // Collectables don't need gravity
+            collectable.setImmovable(true);
+        
+            collectable.body.debugShowBody = false;
+            collectable.body.debugShowVelocity = false;
+        
+            collectable.setScale(0.015);
+            collectable.y += 5; 
         });
+        
+        // Add overlap between the player and collectables
+        this.physics.add.overlap(this.player, this.collectables, this.collectItem, null, this);
+    }
+
+    addDeathZones(map) {
+        // Retrieve death zone objects from the 'Death Zones' object layer
+        const deathZoneLayer = map.getObjectLayer('Death Zones');
+        const deathZoneObjects = deathZoneLayer ? deathZoneLayer.objects : [];
+
+        deathZoneObjects.forEach((zone) => {
+            const deathZone = this.deathZones.create(zone.x + 16, zone.y + 45, null).setOrigin(0, 0);
+            deathZone.displayWidth = zone.width;
+            deathZone.displayHeight = zone.height;
+            deathZone.body.setSize(zone.width, zone.height); // Set the physics body size to match the display size
+            deathZone.body.debugShowBody = false;
+            deathZone.body.debugShowVelocity = false;
+        });
+
+        // Add overlap detection between the player and death zones
+        this.physics.add.overlap(this.player, this.deathZones, this.handlePlayerDeath, null, this);
+    }
+
+    addInteractables(map) {
+        // Get interactable center points from object layer
+        const interactableCentersLayer = map.getObjectLayer('Interactables Center');
+        const interactableCenters = interactableCentersLayer ? interactableCentersLayer.objects : [];
+
+        this.interactablePoints = interactableCenters.map(point => ({
+            x: point.x,
+            y: point.y,
+            name: point.name
+        }));
+
+        // console.log('Interactable Points:', this.interactablePoints);
     }
 
     fadeOutUI() {
@@ -338,10 +367,12 @@ export class Game extends Scene {
         const cameraX = this.cameras.main.scrollX;
 
         // Calculate parallax effect based on the camera's position
-        this.backgroundLayer1.x = cameraX * -0.02 - 30; // Slowest, furthest background
-        this.backgroundLayer2.x = cameraX * -0.05 - 30; // Mid-speed background
-        this.backgroundLayer3.x = cameraX * -0.08 - 30; // Fastest, closest background
-
+        if(this.backgroundLayer1 && this.backgroundLayer2 && this.backgroundLayer3) {
+            this.backgroundLayer1.x = cameraX * -0.02 - 30; // Slowest, furthest background
+            this.backgroundLayer2.x = cameraX * -0.05 - 30; // Mid-speed background
+            this.backgroundLayer3.x = cameraX * -0.08 - 30; // Fastest, closest background
+        }
+        
         // Update enemies' movement
         this.enemies.children.iterate((enemy) => {
             // Move enemy based on patrol direction
@@ -460,7 +491,6 @@ export class Game extends Scene {
         }
         // Add more interaction cases if needed
         else {
-            console.log(`Interacted with: ${interactable.name}`);
             // Handle other interactions
         }
     }
@@ -635,8 +665,6 @@ export class Game extends Scene {
     collectItem(player, collectable) {
         // Add to collected items array
         this.collectedItems.push(collectable.name);
-    
-        console.log(`Collected items: ${this.collectedItems}`);
 
         this.incrementScore(500);
     

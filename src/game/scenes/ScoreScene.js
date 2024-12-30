@@ -1,5 +1,6 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
+import { GAME_SETTINGS } from '../Config';
 
 export class ScoreScene extends Scene {
     constructor() {
@@ -13,6 +14,9 @@ export class ScoreScene extends Scene {
         this.collectables = data.collectables;
         this.enemiesKilled = data.enemiesKilled;
         this.totalScore = data.totalScore;
+
+        // Update the current level and start the game scene
+        GAME_SETTINGS.currentLevel++;
     }
 
     preload() {
@@ -39,28 +43,6 @@ export class ScoreScene extends Scene {
         // Fade in from black
         this.cameras.main.fadeIn(2000, 0, 0, 0);
 
-        // // Display scores
-        // this.add.text(400, 200, 'Level Complete!', { fontSize: '32px', fill: '#fff' }).setOrigin(0.5);
-        // this.add.text(400, 250, `Time Taken: ${this.timeTaken} seconds`, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
-        // if (this.timeTaken < 60) {
-        //     this.add.text(400, 250, `Time Taken: ${this.timeTaken} seconds`, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
-        // } else {
-        //     const minutes = Math.floor(this.timeTaken / 60);
-        //     const seconds = this.timeTaken % 60;
-        //     this.add.text(400, 250, `Time Taken: ${minutes}m ${seconds}s`, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
-        // }
-        // this.add.text(400, 300, `Collectables: ${this.collectables}/3`, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
-        // this.add.text(400, 350, `Enemies Killed: ${this.enemiesKilled}`, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
-        // this.add.text(400, 400, `Total Score: ${this.totalScore}`, { fontSize: '24px', fill: '#fff' }).setOrigin(0.5);
-
-        // // Next Level Button
-        // const nextLevelButton = this.add.text(400, 450, 'Next Level', { fontSize: '28px', fill: '#0f0' })
-        //     .setOrigin(0.5)
-        //     .setInteractive()
-        //     .on('pointerdown', () => {
-        //         this.scene.start('Game'); // Adjust if different scene name
-        //     });
-
         // Define the background layers in order
         const bgLayers = [
             { key: 'bg_score_1', scale: 6.5, speed: 0 },    // Static background
@@ -76,7 +58,6 @@ export class ScoreScene extends Scene {
 
         // Iterate and add each background layer with specified scaling
         bgLayers.forEach((layer, index) => {
-            console.log(`Adding background layer: ${layer.key}`);
             const bgImage = this.add.image(gameWidth / 2, gameHeight / 2, layer.key)
                 .setOrigin(0.5, 0.5) // Center the image
                 .setDepth(index)      // Ensure correct rendering order
@@ -89,8 +70,6 @@ export class ScoreScene extends Scene {
                     speed: layer.speed
                 });
             }
-
-            console.log(`bg depth: ${bgImage.depth}`);
         });
 
         // Display scores and other text elements on top of backgrounds
@@ -136,7 +115,9 @@ export class ScoreScene extends Scene {
             padding: { x: 20, y: 10 },
         }).setOrigin(0.5).setDepth(1000);
 
-        this.add.text(gameWidth / 2, 630, 'Next Level', { 
+        var text = GAME_SETTINGS.currentLevel <= GAME_SETTINGS.totalLevels ? 'Next Level' : 'End Game';
+
+        this.add.text(gameWidth / 2, 630, text, { 
             fontSize: '48px', 
             fontFamily: '"monogram", sans-serif',
             fill: '#0f0',
@@ -147,7 +128,20 @@ export class ScoreScene extends Scene {
           .setInteractive()
           .setDepth(1000)
           .on('pointerdown', () => {
-              this.scene.start('Game'); // Adjust if different scene name
+
+            if(GAME_SETTINGS.currentLevel <= GAME_SETTINGS.totalLevels) {
+                console.log(`Starting level ${GAME_SETTINGS.currentLevel}`);
+                this.scene.start('Game');
+            } else {
+                console.log('Game finished!');
+
+                EventBus.emit('scene-change', 'EndGame');
+
+                this.cameras.main.fadeOut(1500, 0, 0, 0);
+
+                this.scene.start('EndGame');
+            }
+
           });
     }
 

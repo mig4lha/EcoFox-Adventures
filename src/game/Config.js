@@ -13,4 +13,5 @@ export const GAME_SETTINGS = {
     tileSpacing: 2,
     backgroundColor: '#000000',
     currentLevel: 1,
+    totalLevels: 2
 };
