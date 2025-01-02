@@ -38,7 +38,7 @@ const config = {
         pixelArt: true, // Ensure pixel art rendering
         antialias: false, // Disable antialiasing
         roundPixels: true // Enable rounding of pixel values
-    }
+    },
 };
 
 const StartGame = (parent) => {

@@ -1,0 +1,17 @@
+{
+    "frames": {
+        "run_enemy_0": { "frame": { "x": 0, "y": 0, "w": 32, "h": 48 } },
+        "run_enemy_1": { "frame": { "x": 48, "y": 0, "w": 32, "h": 48 } },
+        "run_enemy_2": { "frame": { "x": 96, "y": 0, "w": 32, "h": 48 } },
+        "run_enemy_3": { "frame": { "x": 144, "y": 0, "w": 32, "h": 48 } },
+        "death_enemy_0": { "frame": { "x": 0, "y": 192, "w": 32, "h": 48 } },
+        "death_enemy_1": { "frame": { "x": 48, "y": 192, "w": 32, "h": 48 } },
+        "death_enemy_2": { "frame": { "x": 96, "y": 192, "w": 32, "h": 48 } },
+        "death_enemy_3": { "frame": { "x": 144, "y": 192, "w": 32, "h": 48 } }
+    },
+    "meta": {
+        "image": "enemy_spritesheet.png",
+        "size": { "w": 192, "h": 256 },
+        "scale": "1"
+    }
+}

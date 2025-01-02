@@ -1,6 +1,7 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
 import { GAME_SETTINGS } from '../Config';
+import { Projectile } from '../entities/Projectile';
 
 export class Game extends Scene {
     constructor() {
@@ -38,14 +39,19 @@ export class Game extends Scene {
         this.load.image('background_layer_2', 'backgrounds/background_layer_2_extended_2.png');
         this.load.image('background_layer_3', 'backgrounds/background_layer_3_extended_2.png');
 
-        this.load.image('enemy1', 'enemies/bichinho.png');
+        // this.load.image('enemy', 'enemies/bichinho.png');
         this.load.audio('enemyDeathSound1', 'audio/bichinho_morto.mp3');
-        this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
+        // this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
 
         this.load.image('collectable', 'collectables/moedinha.png');
 
+        this.load.spritesheet('projectile', 'enemies/enemy_projectile.png', {
+            frameWidth: 16,
+            frameHeight: 16
+        });
 
         this.load.atlas('player', 'characters/fox_spritesheet.png', 'characters/fox_spritesheet.json');
+        this.load.atlas('enemy', 'enemies/enemy_spritesheet.png', 'enemies/enemy_spritesheet.json');
     }
 
     create() {
@@ -100,6 +106,41 @@ export class Game extends Scene {
 
         this.player.body.debugShowBody = false;
         this.player.body.debugShowVelocity = false;
+
+        this.anims.create({
+            key: 'run_enemy',
+            frames: [
+                { key: 'enemy', frame: 'run_enemy_0' },
+                { key: 'enemy', frame: 'run_enemy_1' },
+                { key: 'enemy', frame: 'run_enemy_2' },
+                { key: 'enemy', frame: 'run_enemy_3' },
+            ],
+            frameRate: 10,
+            repeat: -1   
+        });
+        this.anims.create({
+            key: 'death_enemy',
+            frames: [
+                { key: 'enemy', frame: 'death_enemy_0' },
+                { key: 'enemy', frame: 'death_enemy_1' },
+                { key: 'enemy', frame: 'death_enemy_2' },
+                { key: 'enemy', frame: 'death_enemy_3' },
+            ],
+            frameRate: 60,
+            repeat: 0  
+        });
+        // Define projectile animation
+        this.anims.create({
+            key: 'projectile_anim',
+            frames: this.anims.generateFrameNumbers('projectile', { start: 0, end: 3 }), // Adjust frame range
+            frameRate: 10,
+            repeat: -1
+        });
+         // Create a group for projectiles
+        this.projectiles = this.physics.add.group({
+            classType: Projectile, // Ensure Projectile class is imported
+            runChildUpdate: true
+        });
 
         // Add enemies, collectables, death zones, interactables
         this.addEnemies(this.map);
@@ -178,15 +219,6 @@ export class Game extends Scene {
         this.levelStartTime = this.time.now;
         
         this.debugGraphics = this.add.graphics();
-
-        // this.input.keyboard.on('keydown-O', () => {
-        //     this.fadeOutUI();
-        // });
-
-        // // Example: Trigger fade-in without changing scenes
-        // this.input.keyboard.on('keydown-I', () => {
-        //     this.fadeInUI();
-        // });
     }
 
     loadLevel(levelNumber) {
@@ -235,22 +267,33 @@ export class Game extends Scene {
         const enemySpawnLayer = map.getObjectLayer('Enemy Spawn');
         const enemyObjects = enemySpawnLayer ? enemySpawnLayer.objects : [];
         enemyObjects.forEach((enemyObject) => {
-            // if (enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
-                // Get the enemy's original width from the texture
-                const enemyTexture = this.textures.get('enemy1');
+                // Calculate patrol boundaries based on enemyObject.width
+                const patrolMinX = enemyObject.x;
+                const patrolMaxX = enemyObject.x + enemyObject.width;
+
+                // // Get the enemy's original width from the texture
+                const enemyTexture = this.textures.get('enemy');
                 const enemyFrame = enemyTexture.get();
         
                 const originalEnemyWidth = enemyFrame.width;
-                const enemyScale = 0.10;
+                const enemyScale = 2;
+                const enemyWidth = enemyFrame.width * enemyScale;
+                const halfEnemyWidth = enemyWidth / 2;
         
-                // Calculate the enemy's display width after scaling
+                // // Calculate the enemy's display width after scaling
                 const enemyDisplayWidth = originalEnemyWidth * enemyScale;
         
                 // Number of enemies to spawn
                 var numEnemies = 1;
 
-                if(enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
-                    numEnemies = 2;
+                if(GAME_SETTINGS.currentLevel === 1) {
+                    if(enemyObject.name === 'enemy_spawn_1' || enemyObject.name === 'enemy_spawn_2') {
+                        numEnemies = 2;
+                    }
+                } else if(GAME_SETTINGS.currentLevel === 2) {
+                    if(enemyObject.name === 'enemy_spawn_3' || enemyObject.name === 'enemy_spawn_4' || enemyObject.name === 'enemy_spawn_7' || enemyObject.name === 'enemy_spawn_8') { 
+                        numEnemies = 2;
+                    }
                 }
 
                 const patrolAreaWidth = enemyObject.width / numEnemies;
@@ -259,15 +302,29 @@ export class Game extends Scene {
                 for (let i = 0; i < numEnemies; i++) {
 
                     // Calculate the patrol area's start X coordinate
-                    const patrolStartX = enemyObject.x + i * patrolAreaWidth;
+                    const patrolStartX = patrolMinX + i * patrolAreaWidth;
         
                     // Center the enemy within its patrol area
-                    const enemyX = patrolStartX + (patrolAreaWidth - enemyDisplayWidth) / 2;
+                    const enemyFrame = this.textures.getFrame('enemy', 'run_enemy_0');
+                    if (!enemyFrame) {
+                        console.error('Frame "run_enemy_0" not found in "enemy" atlas.');
+                        return;
+                    }
+                    
+                    const enemyX = patrolStartX + (patrolAreaWidth - (enemyFrame.width * 2)) / 2; // Assuming enemyScale = 2
+
+                    // Adjust patrol boundaries to account for enemy width
+                    const patrolMinXAdjusted = patrolMinX + halfEnemyWidth;
+                    const patrolMaxXAdjusted = patrolMaxX - halfEnemyWidth;
         
                     // Create the enemy at the calculated position
-                    const enemy = this.enemies.create(enemyX, enemyObject.y, 'enemy1');
+                    const enemy = this.enemies.create(enemyX, enemyObject.y - 16, 'enemy');
                     enemy.setScale(enemyScale);
                     enemy.setCollideWorldBounds(true);
+
+                    // Adjust the enemy's hitbox size
+                    enemy.body.setSize(enemy.width, enemy.height * 0.75, true); // Reduce Y size to 60%
+                    enemy.body.setOffset(0, enemy.height * 0.27); // Adjust Y offset if needed
             
                     enemy.body.debugShowBody = false;
                     enemy.body.debugShowVelocity = false;
@@ -278,19 +335,26 @@ export class Game extends Scene {
                     // Set initial movement properties
                     enemy.setVelocityX(50); // Adjust speed as needed
                     enemy.patrolDirection = 1; // 1 for right, -1 for left
-        
-                    // Set movement boundaries for the enemy
-                    enemy.minX = patrolStartX + 32;
-                    enemy.maxX = patrolStartX + patrolAreaWidth - enemyDisplayWidth + 32;
+                    
+                    // Assign patrol boundaries
+                    enemy.patrolMinX = patrolMinXAdjusted;
+                    enemy.patrolMaxX = patrolMaxXAdjusted;
+
+                    // Set initial orientation
+                    enemy.flipX = false; // Facing right
+
+                    enemy.play('run_enemy'); // Start the run animation
                 }
-            // }
         });
 
         // Collide enemies with terrain
         this.physics.add.collider(this.enemies, this.terrainLayer);
 
+        // Set up collision between enemies
+        this.physics.add.collider(this.enemies, this.enemies, this.handleEnemyCollision, null, this);
+
         // Detect collision between player and enemies
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.playerEnemyCollision = this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
     }
 
     addCollectables(map) {
@@ -373,20 +437,29 @@ export class Game extends Scene {
             this.backgroundLayer3.x = cameraX * -0.08 - 30; // Fastest, closest background
         }
         
-        // Update enemies' movement
-        this.enemies.children.iterate((enemy) => {
-            // Move enemy based on patrol direction
-            enemy.setVelocityX(50 * enemy.patrolDirection);
+        // Iterate through each enemy to manage movement and orientation
+        this.enemies.getChildren().forEach((enemy) => {
+            // Boundary Check: Ensure enemy stays within patrolMinX and patrolMaxX
+            if (enemy.x <= enemy.patrolMinX && enemy.patrolDirection === -1) {
+                enemy.patrolDirection = 1;
+                enemy.setVelocityX(50 * enemy.patrolDirection);
+                enemy.flipX = false; // Face right
+            } else if (enemy.x >= enemy.patrolMaxX && enemy.patrolDirection === 1) {
+                enemy.patrolDirection = -1;
+                enemy.setVelocityX(50 * enemy.patrolDirection);
+                enemy.flipX = true; // Face left
+            }
 
-            // Reverse direction upon reaching boundaries
-            if (enemy.x >= enemy.maxX) {
-                enemy.x = enemy.maxX; // Correct position
-                enemy.patrolDirection = -1; // Change direction to left
-                enemy.flipX = false; // Flip sprite horizontally if needed
-            } else if (enemy.x <= enemy.minX) {
-                enemy.x = enemy.minX; // Correct position
-                enemy.patrolDirection = 1; // Change direction to right
-                enemy.flipX = true; // Reset sprite flip if needed
+            // Detect if player is within patrol area
+            const playerX = this.player.x;
+            const playerY = this.player.y;
+
+            const isPlayerInPatrolArea = playerX >= enemy.patrolMinX && playerX <= enemy.patrolMaxX;
+            const isPlayerInFront = (enemy.patrolDirection === 1 && playerX > enemy.x) ||
+                                    (enemy.patrolDirection === -1 && playerX < enemy.x);
+
+            if (!enemy.isDead && isPlayerInPatrolArea && isPlayerInFront) {
+                this.handleEnemyAttack(enemy);
             }
         });
 
@@ -485,6 +558,74 @@ export class Game extends Scene {
         }
     }
 
+    handleEnemyAttack(enemy) {
+        if (!enemy.isAttacking && !enemy.isDead) {
+            enemy.isAttacking = true;
+            enemy.setVelocityX(0); // Stop patrolling
+            console.log('Enemy is attacking!');
+
+            // Define spawn offsets
+            const projectile_offset_x = 30; // Horizontal offset
+            const projectile_offset_y = 15;  // Vertical offset
+
+            // Calculate spawn position based on direction
+            const spawnX = enemy.x + (projectile_offset_x * enemy.patrolDirection);
+            const spawnY = enemy.y + projectile_offset_y;
+
+            // Create a projectile via the group to ensure it's managed correctly
+            const projectile = this.projectiles.get(spawnX, spawnY, 'projectile');
+
+            if (projectile) {
+                projectile.setActive(true);
+                projectile.setVisible(true);
+                projectile.direction = enemy.patrolDirection; // 1 for right, -1 for left
+                projectile.startX = projectile.x;
+                projectile.body.debugShowBody = false;
+                projectile.body.debugShowVelocity = false;
+
+                // Set velocity based on direction
+                projectile.setVelocityX(projectile.speed * projectile.direction);
+
+                // Play the projectile animation
+                projectile.play('projectile_anim');
+
+                // Set up collision between projectile and player
+                this.physics.add.overlap(projectile, this.player, () => {
+                    if (!this.isInvulnerable) {
+                        // Player takes damage
+                        this.handlePlayerDamage(1);
+                        this.triggerInvulnerability();
+                    }
+                    projectile.destroy(); // Destroy the projectile upon collision
+                }, null, this);
+            } else {
+                console.warn('Projectile could not be created.');
+            }
+
+            // Reset attacking state after attack duration
+            this.time.delayedCall(3000, () => { // 3 seconds attack duration
+                if (enemy.active && !enemy.isDead) {
+                    enemy.isAttacking = false;
+                    // Resume patrolling in the same direction
+                    enemy.setVelocityX(50 * enemy.patrolDirection);
+                    enemy.play('run_enemy');
+                }
+            }, [], this);
+        }
+    }
+
+    handleEnemyCollision(enemy1, enemy2) {
+        // Reverse direction for enemy1
+        enemy1.patrolDirection *= -1;
+        enemy1.setVelocityX(50 * enemy1.patrolDirection);
+        enemy1.flipX = enemy1.patrolDirection === -1;
+    
+        // Reverse direction for enemy2
+        enemy2.patrolDirection *= -1;
+        enemy2.setVelocityX(50 * enemy2.patrolDirection);
+        enemy2.flipX = enemy2.patrolDirection === -1;
+    }
+
     handleInteraction(interactable) {
         if (interactable.name === 'interactable_end') {
             this.finishLevel();
@@ -497,7 +638,6 @@ export class Game extends Scene {
 
     // Add this to track completion time when level ends
     finishLevel() {        
-        // Start fade-out effect over 1000ms (1 second)
         this.cameras.main.fadeOut(2000, 0, 0, 0);
 
         // Emit event to trigger React components to fade out
@@ -527,7 +667,7 @@ export class Game extends Scene {
     
                 // Optional: Start another fade effect before transitioning to ScoreScene
                 this.cameras.main.fadeOut(1500, 0, 0, 0);
-    
+
                 const finalTime = this.levelTime;
     
                 // Listen once for the new fade-out completion to proceed to ScoreScene
@@ -576,16 +716,19 @@ export class Game extends Scene {
             this.sound.play('enemyDeathSound1', { volume: 0.05 });
     
             // Change the sprite to the enemy death sprite
-            enemy.setTexture('enemyDeath1');
+            // enemy.setTexture('enemyDeath1');
+
+            enemy.play('death_enemy', true);
     
             // Offset the death sprite on the Y axis
-            enemy.y += 28; // Adjust the value as needed
+            // enemy.y += 28; // Adjust the value as needed
     
             // Disable the physics body to make the sprite static and remove hitbox
             enemy.body.setVelocity(0);
             enemy.body.setImmovable(true);
             enemy.body.moves = false;
             enemy.body.enable = false; // Disable the physics body
+            enemy.isDead = true;
 
             this.enemiesKilled += 1
             this.incrementScore(100)
@@ -645,6 +788,11 @@ export class Game extends Scene {
     triggerInvulnerability() {
         this.isInvulnerable = true;
     
+        // Disable collision between player and enemies
+        if (this.playerEnemyCollision) {
+            this.playerEnemyCollision.active = false;
+        }
+    
         // Start blinking effect
         this.invulnerabilityEffect = this.tweens.add({
             targets: this.player,
@@ -655,10 +803,20 @@ export class Game extends Scene {
             yoyo: true
         });
     
+        // Re-enable collision after invulnerability time
         this.time.delayedCall(GAME_SETTINGS.playerInvulnerabilityTime, () => {
             this.isInvulnerable = false;
-            this.invulnerabilityEffect.stop();
-            this.player.setAlpha(1); // Ensure player is fully opaque
+    
+            // Re-enable collision between player and enemies
+            if (this.playerEnemyCollision) {
+                this.playerEnemyCollision.active = true;
+            }
+    
+            // Stop blinking effect and ensure player is fully opaque
+            if (this.invulnerabilityEffect) {
+                this.invulnerabilityEffect.stop();
+                this.player.setAlpha(1);
+            }
         }, [], this);
     }
 
