@@ -26,29 +26,24 @@ export class Preloader extends Scene
 
     preload ()
     {
-        //  Load the assets for the game - Replace with your own assets
+        // Load the assets for the game scene
         this.load.setPath('assets');
 
-        // Backgrounds
-        this.load.image('main_menu_background', 'backgrounds/main_menu_background.png');
+        // Audio
+        this.load.audio('main_menu', 'audio/main_menu.ogg');
 
-        // Logos
-        this.load.image('logo', 'logos/logo.png');
+        this.load.audio('enemy_death', 'audio/enemy_death.mp3');
+        this.load.audio('jump_on_enemy', 'audio/jump_on_enemy.mp3');
+        this.load.audio('enemy_laser', 'audio/enemy_laser.mp3');
+        this.load.audio('player_damage', 'audio/player_damage.mp3');
+        this.load.audio('jump', 'audio/jump.mp3');
+        this.load.audio('double_jump', 'audio/double_jump.mp3');
+        this.load.audio('collectable', 'audio/collectable.mp3');
+        this.load.audio('interactable', 'audio/interactable.ogg');
 
-        // Buttons
-        this.load.spritesheet('playButton', 'buttons/playButton.png', { frameWidth: 144, frameHeight: 72 });
-        this.load.spritesheet('leaderboardButton', 'buttons/leaderboardButton.png', { frameWidth: 144, frameHeight: 72 });
-
-        this.load.image('test_tiles', 'test_assets/test_tiles.png');
-        this.load.tilemapTiledJSON('test_map', 'levels/test_map.json');
-
-        console.clear();
-
-        // Log any errors during the loading process
-        this.load.on('loaderror', (file) => {
-            console.error(`Failed to load file: ${file.key}`);
-        });
-
+        this.load.audio('level1', 'audio/level1.ogg');
+        this.load.audio('level2', 'audio/level2.ogg');
+        this.load.audio('menus', 'audio/menus.ogg');
     }
 
     create ()

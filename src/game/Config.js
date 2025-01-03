@@ -13,4 +13,8 @@ export const GAME_SETTINGS = {
     tileSpacing: 2,
     backgroundColor: '#000000',
     currentLevel: 1,
+    totalLevels: 2,
+    playerName: 'Player',
+    totalScore: 0,
+    totalTimeTaken: 0, // Total time in seconds
 };

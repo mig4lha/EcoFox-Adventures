@@ -21,6 +21,7 @@
         "process-assets": "tile-extruder --tileWidth 32 --tileHeight 32 --margin 1 --spacing 2 --input ./public/assets/test_assets/test_tiles.png --output ./public/assets/test_assets/test_tiles_mod.png "
     },
     "dependencies": {
+        "firebase": "^11.1.0",
         "phaser": "^3.86.0",
         "react": "^18.3.1",
         "react-dom": "^18.3.1"
