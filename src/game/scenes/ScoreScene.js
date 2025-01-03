@@ -14,6 +14,11 @@ export class ScoreScene extends Scene {
         this.collectables = data.collectables;
         this.enemiesKilled = data.enemiesKilled;
         this.totalScore = data.totalScore;
+        this.cursors = data.cursors;
+        this.keys = data.keys;
+
+        GAME_SETTINGS.totalScore += this.totalScore;
+        GAME_SETTINGS.totalTimeTaken += this.timeTaken;
 
         // Update the current level and start the game scene
         GAME_SETTINGS.currentLevel++;
@@ -42,6 +47,8 @@ export class ScoreScene extends Scene {
     create() {
         // Fade in from black
         this.cameras.main.fadeIn(2000, 0, 0, 0);
+
+        this.sound.play('menus', { volume: 0.1, loop: true });
 
         // Define the background layers in order
         const bgLayers = [
@@ -129,23 +136,26 @@ export class ScoreScene extends Scene {
           .setDepth(1000)
           .on('pointerdown', () => {
 
+            this.sound.stopAll();
+
             if(GAME_SETTINGS.currentLevel <= GAME_SETTINGS.totalLevels) {
-                console.log(`Starting level ${GAME_SETTINGS.currentLevel}`);
                 this.scene.start('Game');
             } else {
-                console.log('Game finished!');
-
+                
                 EventBus.emit('scene-change', 'EndGame');
 
                 this.cameras.main.fadeOut(1500, 0, 0, 0);
 
-                this.scene.start('EndGame');
+                this.scene.start('EndGame', {
+                    keys: this.keys,
+                    cursors: this.cursors,
+                });
             }
 
           });
     }
 
-    update(time, delta) {
+    update() {
         // Iterate through each parallax layer and adjust its position
         this.parallaxLayers.forEach(layer => {
             // Move the layer horizontally based on its speed

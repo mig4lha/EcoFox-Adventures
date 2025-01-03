@@ -18,6 +18,8 @@ export class Game extends Scene {
         this.map = null;
         this.tileset = null;
         this.props = null;
+        this.cursors = null;
+        this.keys = null;
     }
 
     preload() {
@@ -39,11 +41,7 @@ export class Game extends Scene {
         this.load.image('background_layer_2', 'backgrounds/background_layer_2_extended_2.png');
         this.load.image('background_layer_3', 'backgrounds/background_layer_3_extended_2.png');
 
-        // this.load.image('enemy', 'enemies/bichinho.png');
-        this.load.audio('enemyDeathSound1', 'audio/bichinho_morto.mp3');
-        // this.load.image('enemyDeath1', 'enemies/bichinho_morto.png');
-
-        this.load.image('collectable', 'collectables/moedinha.png');
+        this.load.image('collectable', 'collectables/berry.png');
 
         this.load.spritesheet('projectile', 'enemies/enemy_projectile.png', {
             frameWidth: 16,
@@ -55,6 +53,9 @@ export class Game extends Scene {
     }
 
     create() {
+
+        this.sound.stopAll(); // Stop all sounds before transitioning
+        
         this.cameras.main.setBackgroundColor(GAME_SETTINGS.backgroundColor);
 
         this.enemiesKilled = 0 // Track enemies killed
@@ -164,8 +165,7 @@ export class Game extends Scene {
         EventBus.emit('scene-change', 'Game'); // Emit scene change event
 
         // Set up input handling
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.keys = this.input.keyboard.addKeys('W,A,S,D,H,R,E,O,I');
+        this.enableKeys();
 
         this.interactionKey = this.keys.E;
 
@@ -219,9 +219,41 @@ export class Game extends Scene {
         this.levelStartTime = this.time.now;
         
         this.debugGraphics = this.add.graphics();
+
+        if(GAME_SETTINGS.currentLevel === 1) {
+            this.sound.play('level1', { volume: 0.1, loop: true });
+        } else if(GAME_SETTINGS.currentLevel === 2) {
+            this.sound.play('level2', { volume: 0.1, loop: true });
+        }
     }
 
-    loadLevel(levelNumber) {
+    disableKeys() {
+        Object.values(this.keys).forEach(key => key.enabled = false);
+        this.cursors.left.enabled = false;
+        this.cursors.right.enabled = false;
+        this.cursors.up.enabled = false;
+        this.cursors.down.enabled = false;
+
+        this.input.keyboard.enabled = false;
+
+        this.input.keyboard.removeAllKeys();
+        this.input.keyboard.removeAllListeners();
+    }
+    
+    enableKeys() {
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,H,R,E,O,I');
+
+        Object.values(this.keys).forEach(key => key.enabled = true);
+        this.cursors.left.enabled = true;
+        this.cursors.right.enabled = true;
+        this.cursors.up.enabled = true;
+        this.cursors.down.enabled = true;
+
+        this.input.keyboard.enabled = true;
+    }
+
+    loadLevel(levelNumber) {        
         // Clear existing groups (enemies, collectables, etc.) if necessary
         this.enemies.clear(true, true);
         this.collectables.clear(true, true);
@@ -373,7 +405,7 @@ export class Game extends Scene {
             collectable.body.debugShowBody = false;
             collectable.body.debugShowVelocity = false;
         
-            collectable.setScale(0.015);
+            collectable.setScale(2);
             collectable.y += 5; 
         });
         
@@ -483,10 +515,12 @@ export class Game extends Scene {
                 if (this.player.body.blocked.down) {
                     this.player.setVelocityY(jumpSpeed);
                     this.player.play('jump', true);
+                    this.sound.play('jump', { volume: 0.1 });
                     this.canDoubleJump = true; // Enable double jump after initial jump
                 } else if (this.canDoubleJump) {
                     this.player.setVelocityY(doubleJumpSpeed);
                     this.player.play('jump', true);
+                    this.sound.play('double_jump', { volume: 0.1 });
                     this.canDoubleJump = false; // Disable double jump after it's used
                 }
             }
@@ -522,8 +556,13 @@ export class Game extends Scene {
                     interactable = point;
         
                     const camera = this.cameras.main;
-                    const screenX = point.x - camera.scrollX + 80;
-                    const screenY = point.y - camera.scrollY + 50;
+
+                    var screenX = point.x - camera.scrollX + 80;
+                    var screenY = point.y - camera.scrollY + 50;
+
+                    if(GAME_SETTINGS.currentLevel === 2) {
+                        screenX = point.x - camera.scrollX + 300;
+                    }
         
                     EventBus.emit('show-interaction', { x: screenX, y: screenY });
                 }
@@ -575,6 +614,8 @@ export class Game extends Scene {
             // Create a projectile via the group to ensure it's managed correctly
             const projectile = this.projectiles.get(spawnX, spawnY, 'projectile');
 
+            this.sound.play('enemy_laser', { volume: 0.1 });
+
             if (projectile) {
                 projectile.setActive(true);
                 projectile.setVisible(true);
@@ -603,7 +644,7 @@ export class Game extends Scene {
             }
 
             // Reset attacking state after attack duration
-            this.time.delayedCall(3000, () => { // 3 seconds attack duration
+            this.time.delayedCall(1000, () => { // 3 seconds attack duration
                 if (enemy.active && !enemy.isDead) {
                     enemy.isAttacking = false;
                     // Resume patrolling in the same direction
@@ -636,9 +677,14 @@ export class Game extends Scene {
         }
     }
 
-    // Add this to track completion time when level ends
     finishLevel() {        
+        const finalTime = this.levelTime;
+
+        this.disableKeys();
+
         this.cameras.main.fadeOut(2000, 0, 0, 0);
+
+        this.sound.stopAll();
 
         // Emit event to trigger React components to fade out
         this.fadeOutUI();
@@ -652,11 +698,17 @@ export class Game extends Scene {
             // Start fade-in effect over 1000ms (1 second)
             this.cameras.main.fadeIn(2000, 0, 0, 0);
 
+            this.time.delayedCall(1000, () => {
+                this.sound.play('interactable', { volume: 0.1 });
+            }, [], this);
+
             // Make the player jump twice with a 1-second interval
-            this.time.delayedCall(1500, () => {
+            this.time.delayedCall(2000, () => {
                 this.player.setVelocityY(-500);
+                this.sound.play('jump', { volume: 0.1 });
                 this.time.delayedCall(1000, () => {
                     this.player.setVelocityY(-500);
+                    this.sound.play('jump', { volume: 0.1 });
                 }, [], this);
             }, [], this);
     
@@ -667,8 +719,6 @@ export class Game extends Scene {
     
                 // Optional: Start another fade effect before transitioning to ScoreScene
                 this.cameras.main.fadeOut(1500, 0, 0, 0);
-
-                const finalTime = this.levelTime;
     
                 // Listen once for the new fade-out completion to proceed to ScoreScene
                 this.cameras.main.once('camerafadeoutcomplete', () => {
@@ -676,7 +726,9 @@ export class Game extends Scene {
                         timeTaken: finalTime,
                         collectables: this.collectablesCollected,
                         enemiesKilled: this.enemiesKilled,
-                        totalScore: this.calculateScore(this.score, finalTime)
+                        totalScore: this.calculateScore(this.score, finalTime),
+                        keys: this.keys,
+                        cursors: this.cursors,
                     });
                 }, this);
             }, [], this);
@@ -693,9 +745,18 @@ export class Game extends Scene {
     }
 
     handlePlayerDeath(player, deathZone) {
-        this.handlePlayerDamage(3); // Instantly kill the player
+        this.handlePlayerDamage(1); // Instantly kill the player
+        this.resetPlayer();
     }
     
+    resetPlayer() {
+        this.player.setX(this.playerX);
+        this.player.setY(this.playerY);
+        this.player.setVelocity(0, 0);
+        this.player.setAlpha(1);
+        this.isPlayerDead = false;
+    }
+
     handlePlayerEnemyCollision(player, enemy) {
         if (player.body.velocity.y > 0 && player.y < enemy.y) {
             // Player jumps on enemy
@@ -710,10 +771,12 @@ export class Game extends Scene {
     
     damageEnemy(enemy) {
         enemy.hitPoints -= 1;
+
+        this.sound.play('jump_on_enemy', { volume: 0.1 });
     
         if (enemy.hitPoints <= 0) {
             // Play the death sound
-            this.sound.play('enemyDeathSound1', { volume: 0.05 });
+            this.sound.play('enemy_death', { volume: 0.1 });
     
             // Change the sprite to the enemy death sprite
             // enemy.setTexture('enemyDeath1');
@@ -824,6 +887,8 @@ export class Game extends Scene {
         // Add to collected items array
         this.collectedItems.push(collectable.name);
 
+        this.sound.play('collectable', { volume: 0.1 });
+
         this.incrementScore(500);
     
         // Disable the collectable
@@ -853,6 +918,8 @@ export class Game extends Scene {
     
         this.playerHealth -= amount;
 
+        this.sound.play('player_damage', { volume: 0.1 });
+
         if (this.playerHealth <= 0) {
 
             console.log('Player died!');
@@ -880,6 +947,8 @@ export class Game extends Scene {
     }
 
     resetGame() {
+        this.sound.stopAll();
+
         // Reset player health
         this.playerHealth = 3;
         EventBus.emit('health-update', this.playerHealth); // Emit health update event
