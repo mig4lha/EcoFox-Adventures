@@ -135,7 +135,7 @@ body {
 
 @font-face {
     font-family: 'monogram';
-    src: url('/assets/fonts/monogram.ttf') format('truetype');
+    src: url('./assets/fonts/monogram.ttf') format('truetype');
 }
 
 /* Custom class to apply the 'monogram' font */
