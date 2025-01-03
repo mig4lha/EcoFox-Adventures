@@ -254,6 +254,10 @@ export class Game extends Scene {
     }
 
     loadLevel(levelNumber) {        
+        this.playerHealth = 3;
+        console.log(`Player health: ${this.playerHealth}`);
+        EventBus.emit('health-update', this.playerHealth);
+
         // Clear existing groups (enemies, collectables, etc.) if necessary
         this.enemies.clear(true, true);
         this.collectables.clear(true, true);

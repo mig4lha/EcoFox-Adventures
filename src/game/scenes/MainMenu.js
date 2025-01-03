@@ -1,13 +1,15 @@
 import { EventBus } from '../EventBus';
 import { Scene } from 'phaser';
+import { debounce } from 'lodash';
 
 export class MainMenu extends Scene {
     constructor() {
         super('MainMenu');
+        this.handleLeaderboardClick = debounce(this.showLeaderboard.bind(this), 300, { leading: true, trailing: false });
         this.parallaxLayers = []; // Array to hold parallax layers with two images each
     }
 
-    preload() { 
+    preload() {
         // Set the loading path
         this.load.setPath('assets');
 
@@ -21,11 +23,11 @@ export class MainMenu extends Scene {
 
         // Logos
         this.load.image('logo', 'logos/logo.png');
-        
+
         // Buttons
         this.load.spritesheet('playButton', 'buttons/playButton.png', { frameWidth: 144, frameHeight: 72 });
         this.load.spritesheet('leaderboardButton', 'buttons/leaderboardButton.png', { frameWidth: 144, frameHeight: 72 });
-        
+
         // Additional Assets (if needed)
         this.load.image('test_tiles', 'test_assets/test_tiles.png');
         this.load.tilemapTiledJSON('test_map', 'levels/test_map.json');
@@ -41,7 +43,7 @@ export class MainMenu extends Scene {
     create() {
         // Fade in from black over 2 seconds
         this.cameras.main.fadeIn(2000, 0, 0, 0);
-        
+
         this.sound.play('main_menu', { volume: 0.1 });
 
         // Clear existing parallax layers if any (to prevent duplicates)
@@ -106,7 +108,7 @@ export class MainMenu extends Scene {
         // Add logo at the top center
         this.logo = this.add.image(this.scale.width / 2, this.scale.height * 0.3, 'logo')
             .setOrigin(0.5, 0.5)
-            .setScale(1) 
+            .setScale(1)
             .setDepth(1000);
     }
 
@@ -127,7 +129,7 @@ export class MainMenu extends Scene {
             .setScale(2) // Adjust scale as needed
             .setDepth(1000)
             .on('pointerdown', () => {
-                this.showLeaderboard();
+                this.handleLeaderboardClick();
             })
     }
 
@@ -137,7 +139,7 @@ export class MainMenu extends Scene {
     }
 
     showLeaderboard() {
-        // Implement leaderboard display logic here
+        EventBus.emit('showLeaderboard'); // Emit event to show Leaderboard
     }
 
     update() {
@@ -146,7 +148,7 @@ export class MainMenu extends Scene {
             layer.images.forEach((image, index) => {
                 // Move the layer horizontally based on its speed
                 image.x -= layer.speed;
-    
+
                 // If the image moves off the left side of the screen, reposition it to the right
                 if (image.x <= -image.displayWidth) {
                     const otherImage = layer.images[1 - index];
@@ -155,7 +157,7 @@ export class MainMenu extends Scene {
             });
         });
     }
-    
+
     clearParallaxLayers() {
         // Remove existing parallax images from the scene
         this.parallaxLayers.forEach(layer => {

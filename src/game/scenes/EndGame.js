@@ -24,7 +24,7 @@ export class EndGame extends Scene {
             color: '#ffffff'
         }).setOrigin(0.5);
 
-        this.add.text(width / 2, height / 2 - 50, `Total Time Taken: ${GAME_SETTINGS.totalTimeTaken}`, {
+        this.add.text(width / 2, height / 2 - 50, `Total Time Taken: ${GAME_SETTINGS.totalTimeTaken} seconds`, {
             fontFamily: '"monogram", sans-serif',
             fontSize: '64px',
             color: '#ffffff'

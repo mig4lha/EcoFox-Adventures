@@ -26,7 +26,7 @@ const NameInputForm = () => {
     return (
         <div className="name-input-overlay">
             <form className="name-input-form" onSubmit={handleSubmit}>
-                <label htmlFor="playerName">Enter Your Name:</label>
+                <label htmlFor="playerName" className="monogram-font-xx-large">Enter Your Name:</label>
                 <input
                     ref={inputRef}
                     type="text"
@@ -40,8 +40,9 @@ const NameInputForm = () => {
                     onKeyDown={(e) => {
                         e.stopPropagation(); // Prevent key events from bubbling
                     }}
+                    className="monogram-font-xx-large"
                 />
-                <button type="submit">Submit</button>
+                <button type="submit" className="monogram-font-xx-large">Submit</button>
             </form>
         </div>
     );

@@ -2,16 +2,18 @@ body {
     margin: 0;
     padding: 0;
     color: rgba(255, 255, 255, 0.87);
-    background-color: #000000; 
+    background-color: #000000;
     font-family: Arial, Helvetica, sans-serif;
-    overflow: hidden; /* Prevent scrolling */
+    overflow: hidden;
+    /* Prevent scrolling */
 }
 
 #app {
     position: relative;
     width: 100vw;
     height: 100vh;
-    overflow: hidden; /* Prevent scrolling */
+    overflow: hidden;
+    /* Prevent scrolling */
 }
 
 #game-container canvas {
@@ -20,7 +22,8 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    display: block; /* Ensures no extra spacing is introduced */
+    display: block;
+    /* Ensures no extra spacing is introduced */
 }
 
 .health-bar {
@@ -30,7 +33,8 @@ body {
     display: flex;
     gap: 10px;
     z-index: 10;
-    pointer-events: none; /* Prevent interactions affecting Phaser canvas */
+    pointer-events: none;
+    /* Prevent interactions affecting Phaser canvas */
 }
 
 .health-heart {
@@ -38,10 +42,14 @@ body {
     height: auto;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    image-rendering: -moz-crisp-edges;    /* Firefox */
-    image-rendering: -o-crisp-edges;      /* Opera */
-    image-rendering: -webkit-optimize-contrast; /* WebKit */
-    -ms-interpolation-mode: nearest-neighbor;   /* IE (non-standard property) */
+    image-rendering: -moz-crisp-edges;
+    /* Firefox */
+    image-rendering: -o-crisp-edges;
+    /* Opera */
+    image-rendering: -webkit-optimize-contrast;
+    /* WebKit */
+    -ms-interpolation-mode: nearest-neighbor;
+    /* IE (non-standard property) */
 }
 
 .button {
@@ -79,7 +87,8 @@ body {
     display: flex;
     gap: 10px;
     z-index: 10;
-    pointer-events: none; /* Prevent interactions affecting Phaser canvas */
+    pointer-events: none;
+    /* Prevent interactions affecting Phaser canvas */
 }
 
 .collectable-icon {
@@ -87,35 +96,59 @@ body {
     height: 64px;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    image-rendering: -moz-crisp-edges;    /* Firefox */
-    image-rendering: -o-crisp-edges;      /* Opera */
-    image-rendering: -webkit-optimize-contrast; /* WebKit */
-    -ms-interpolation-mode: nearest-neighbor;   /* IE (non-standard property) */
+    image-rendering: -moz-crisp-edges;
+    /* Firefox */
+    image-rendering: -o-crisp-edges;
+    /* Opera */
+    image-rendering: -webkit-optimize-contrast;
+    /* WebKit */
+    -ms-interpolation-mode: nearest-neighbor;
+    /* IE (non-standard property) */
 }
 
 .interaction-overlay {
     position: absolute;
     z-index: 10;
     transform: translate(-50%, -100%);
-    pointer-events: none; /* Prevent interfering with game input */
+    pointer-events: none;
+    /* Prevent interfering with game input */
 }
 
 .interaction-overlay img {
-    width: 70px; /* Adjust size as needed */
+    width: 70px;
+    /* Adjust size as needed */
     height: 70px;
-    pointer-events: auto; /* Allow clicking the button */
+    pointer-events: auto;
+    /* Allow clicking the button */
     cursor: pointer;
     image-rendering: pixelated;
     image-rendering: crisp-edges;
-    image-rendering: -moz-crisp-edges;    /* Firefox */
-    image-rendering: -o-crisp-edges;      /* Opera */
-    image-rendering: -webkit-optimize-contrast; /* WebKit */
-    -ms-interpolation-mode: nearest-neighbor;   /* IE (non-standard property) */
+    image-rendering: -moz-crisp-edges;
+    /* Firefox */
+    image-rendering: -o-crisp-edges;
+    /* Opera */
+    image-rendering: -webkit-optimize-contrast;
+    /* WebKit */
+    -ms-interpolation-mode: nearest-neighbor;
+    /* IE (non-standard property) */
 }
 
 @font-face {
     font-family: 'monogram';
     src: url('/assets/fonts/monogram.ttf') format('truetype');
+}
+
+/* Custom class to apply the 'monogram' font */
+.monogram-font-x-large {
+    font-family: 'monogram', sans-serif;
+    /* Fallback to sans-serif if 'monogram' fails to load */
+    font-size: xx-large !important;
+}
+
+.monogram-font-xx-large {
+    font-family: 'monogram', sans-serif;
+    /* Fallback to sans-serif if 'monogram' fails to load */
+    font-size: xx-large !important;
 }
 
 .timer-display {
@@ -124,7 +157,8 @@ body {
     left: 50%;
     transform: translateX(-50%);
     font-size: 64px;
-    font-family: 'monogram', Arial, sans-serif; /* Add fallback fonts */
+    font-family: 'monogram', Arial, sans-serif;
+    /* Add fallback fonts */
     color: white;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
     z-index: 10;
@@ -151,16 +185,19 @@ body {
 }
 
 .name-input-overlay {
-    position: fixed; /* Use fixed to cover the viewport */
+    position: fixed;
+    /* Use fixed to cover the viewport */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7); /* Semi-transparent background */
+    background: rgba(0, 0, 0, 0.7);
+    /* Semi-transparent background */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10000; /* Ensure it's above Phaser canvas */
+    z-index: 10000;
+    /* Ensure it's above Phaser canvas */
 }
 
 .name-input-form {
@@ -169,7 +206,8 @@ body {
     border-radius: 8px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     text-align: center;
-    width: 300px; /* Adjust as needed */
+    width: 300px;
+    /* Adjust as needed */
 }
 
 .name-input-form label {
@@ -202,4 +240,111 @@ body {
 
 .name-input-form button:hover {
     background-color: #218838;
+}
+
+.leaderboard-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    pointer-events: auto; /* Ensure the overlay captures pointer events */
+    /* Ensures it overlays other content */
+}
+
+.leaderboard-container {
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    position: relative;
+    pointer-events: auto; /* Ensure the overlay captures pointer events */
+}
+
+.leaderboard-title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: xxx-large;
+    font-family: 'monogram', sans-serif;
+    /* Apply custom font */
+    color: black;
+    margin-top: 0;
+}
+
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    color: black;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+    border: 1px solid #ddd;
+    padding: 12px;
+    text-align: center;
+    font-size: 1.8em;
+    font-family: 'monogram', sans-serif;
+    /* Apply custom font */
+}
+
+.leaderboard-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.close-button {
+    display: block;
+    margin: 0 auto;
+    padding: 10px 20px;
+    font-size: xx-large;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 2rem;
+    transition: background-color 0.3s ease;
+    font-family: 'monogram', sans-serif;
+    /* Apply custom font */
+}
+
+.close-button:hover {
+    background-color: #ff1a1a;
+}
+
+.error {
+    color: red;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+@media (max-width: 600px) {
+    .leaderboard-container {
+        width: 90%;
+        padding: 20px;
+    }
+
+    .leaderboard-title {
+        font-size: 28px;
+    }
+
+    .leaderboard-table th,
+    .leaderboard-table td {
+        font-size: 16px;
+        padding: 8px;
+    }
+
+    .close-button {
+        font-size: 18px;
+        padding: 8px 16px;
+    }
 }
