@@ -1,7 +1,7 @@
 # EcoFox Adventures 🦊
 ## _Saving the forest, one tree at a time!_ 
 
-In EcoFox Adventures, players take on the role of a fox navigating a forest under threat. The game emphasizes environmental awareness by introducing levels where the fox has to clean up waste from the trees in their surroundings. The game incorporates a storyline where pollution progressively affects the forest and players must “heal” sections and destroy the robots that are destroying the forest to reach the next level. Make sure to defeat as many of robots as possible to save the forest!
+In EcoFox Adventures, the player takes on the role of a Fox navigating a forest under threat. The game emphasizes environmental awareness by introducing levels where the Fox has to clean up waste from the trees in their surroundings. The game incorporates a storyline where pollution progressively affects the trees in the Fox's home. The player must “heal” those sickened trees, while also defeating the robots that are destroying the forest. Make sure to defeat as many of robots as possible to reach the next level and save the forest!
 
 ## Tech Used
 
