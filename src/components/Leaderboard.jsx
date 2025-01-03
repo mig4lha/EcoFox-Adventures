@@ -59,7 +59,7 @@ const Leaderboard = ({ onClose }) => {
                                     <td>
                                         {index + 1 <= 3 ? (
                                             <img 
-                                                src={`/assets/ui/medal${index + 1}.png`} 
+                                                src={`${import.meta.env.BASE_URL}assets/ui/medal${index + 1}.png`} 
                                                 alt={`Rank ${index + 1}`} 
                                                 width="32" 
                                                 height="32" 

@@ -21,7 +21,7 @@ const HealthBar = () => {
             {[...Array(3)].map((_, index) => (
                 <img
                     key={index}
-                    src={index < health ? '/assets/ui/heart_full.png' : '/assets/ui/heart_empty.png'}
+                    src={index < health ? `${import.meta.env.BASE_URL}assets/ui/heart_full.png` : `${import.meta.env.BASE_URL}assets/ui/heart_empty.png`}
                     alt="heart"
                     className="health-heart"
                 />

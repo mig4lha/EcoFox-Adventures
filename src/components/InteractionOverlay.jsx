@@ -32,7 +32,7 @@ const InteractionOverlay = () => {
                 top: position.y,
             }}
         >
-            <img src="/assets/buttons/e_button.png" alt="Interact" />
+            <img src={`${import.meta.env.BASE_URL}assets/buttons/e_button.png`} alt="Interact E" />
         </div>
     );
 };
