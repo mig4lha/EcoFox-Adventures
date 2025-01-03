@@ -18,9 +18,7 @@
         "build": "node log.js build & vite build --config vite/config.prod.mjs",
         "dev-nolog": "vite --config vite/config.dev.mjs",
         "build-nolog": "vite build --config vite/config.prod.mjs",
-        "process-assets": "tile-extruder --tileWidth 32 --tileHeight 32 --margin 1 --spacing 2 --input ./public/assets/test_assets/test_tiles.png --output ./public/assets/test_assets/test_tiles_mod.png ",
-        "deploy": "gh-pages -d dist",
-        "predeploy": "npm run build"
+        "process-assets": "tile-extruder --tileWidth 32 --tileHeight 32 --margin 1 --spacing 2 --input ./public/assets/test_assets/test_tiles.png --output ./public/assets/test_assets/test_tiles_mod.png "
     },
     "dependencies": {
         "firebase": "^11.1.0",
