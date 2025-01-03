@@ -30,11 +30,9 @@ export class Projectile extends Phaser.Physics.Arcade.Sprite {
 
     preUpdate(time, delta) {
         super.preUpdate(time, delta);
-        console.log(`Projectile at (${this.x}, ${this.y}) moving with velocityX: ${this.body.velocity.x}`);
 
         // Calculate distance traveled
         if (Math.abs(this.x - this.startX) >= this.distance) {
-            console.log(`Projectile destroyed after traveling ${this.distance}px`);
             this.destroy();
         }
     }

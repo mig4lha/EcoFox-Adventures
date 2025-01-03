@@ -255,7 +255,6 @@ export class Game extends Scene {
 
     loadLevel(levelNumber) {        
         this.playerHealth = 3;
-        console.log(`Player health: ${this.playerHealth}`);
         EventBus.emit('health-update', this.playerHealth);
 
         // Clear existing groups (enemies, collectables, etc.) if necessary
@@ -445,8 +444,6 @@ export class Game extends Scene {
             y: point.y,
             name: point.name
         }));
-
-        // console.log('Interactable Points:', this.interactablePoints);
     }
 
     fadeOutUI() {
@@ -500,7 +497,6 @@ export class Game extends Scene {
         });
 
         if (this.isPlayerDead) {
-            console.log('Player is dead, input disabled');
             return;
         } else {
             // Horizontal movement (always enabled)
@@ -605,7 +601,6 @@ export class Game extends Scene {
         if (!enemy.isAttacking && !enemy.isDead) {
             enemy.isAttacking = true;
             enemy.setVelocityX(0); // Stop patrolling
-            console.log('Enemy is attacking!');
 
             // Define spawn offsets
             const projectile_offset_x = 30; // Horizontal offset
@@ -811,7 +806,6 @@ export class Game extends Scene {
 
     incrementScore(amount) {
         this.score += amount;
-        console.log(`Score: ${this.score}`);
     }
 
     toggleHitboxVisualization() {
@@ -925,9 +919,6 @@ export class Game extends Scene {
         this.sound.play('player_damage', { volume: 0.1 });
 
         if (this.playerHealth <= 0) {
-
-            console.log('Player died!');
-
             this.playerHealth = 0;
             this.isPlayerDead = true; // Flag to indicate the player is dead
     
@@ -946,7 +937,6 @@ export class Game extends Scene {
             // }, [], this);
         }
 
-        console.log(`Player health: ${this.playerHealth}`);
         EventBus.emit('health-update', this.playerHealth);
     }
 

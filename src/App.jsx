@@ -53,7 +53,6 @@ function App() {
       
             try {
               // Update Config or handle the player name as needed
-              console.log(`Player Name: ${playerName}`);
               setShowNameInput(false);
       
               GAME_SETTINGS.playerName = playerName;
@@ -112,8 +111,8 @@ function App() {
                         <HealthBar />
                         <TimerDisplay />
                         <CollectableBar
-                            collectableAsset="/assets/collectables/berry_gray.png"
-                            collectedAsset="/assets/collectables/berry.png"
+                            collectableAsset={`${import.meta.env.BASE_URL}assets/collectables/berry_gray.png`}
+                            collectedAsset={`${import.meta.env.BASE_URL}assets/collectables/berry.png`}
                         />
                         <InteractionOverlay />
                     </div>
