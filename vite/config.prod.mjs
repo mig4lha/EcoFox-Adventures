@@ -18,7 +18,7 @@ const phasermsg = () => {
 }
 
 export default defineConfig({
-    base: './',
+    base: '/ecofox-adventures/',
     plugins: [
         react(),
         phasermsg()
