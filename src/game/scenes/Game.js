@@ -932,9 +932,7 @@ export class Game extends Scene {
             // this.cursors.enabled = false;
             // this.keys.enabled = false;
     
-            // this.time.delayedCall(3000, () => {
-                this.resetGame();
-            // }, [], this);
+            this.resetGame();
         }
 
         EventBus.emit('health-update', this.playerHealth);
